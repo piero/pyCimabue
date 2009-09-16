@@ -18,7 +18,7 @@ class Message:
         self.serverDst = ''
         self.data = ''
         self.MAX_SIZE = 2048
-        self.RECV_TIMEOUT = 30
+        self.RECV_TIMEOUT = 5
 
 
     def __str__(self):
@@ -58,7 +58,9 @@ class Message:
         except socket.error, (value, message):
             if sock:
                 sock.close()
-            logging.error("[!] Message.send(): Socket error: " + str(value) + ", " + message)
+            logging.error("[!] Message.send(): Socket error: " + str(message))
+            self.type = ErrorMessage
+            self.data = str(message)
             return
 
         line = pickle.dumps(self.msg2dict())
@@ -75,12 +77,16 @@ class Message:
             if sock:
                 sock.close()
             logging.error("[!] Message.send(): " + str(message))
+            self.type = ErrorMessage
+            self.data = str(message)
             return
         
         except socket.error, (value, message):
             if sock:
                 sock.close()
-            logging.error("[!] Message.send(): Socket error: " + str(value) + ", " + message)
+            logging.error("[!] Message.send(): " + str(message))
+            self.type = ErrorMessage
+            self.data = str(message)
             return
         
         self.dict2msg(pickle.loads(raw_data))
@@ -96,7 +102,9 @@ class Message:
         except socket.error, (value, message):
             if sock:
                 sock.close()
-            logging.error("[!] Message.recv(): Socket error: " + str(value) + ", " + message)
+            logging.error("[!] Message.recv(): Socket error: " + str(message))
+            self.type = ErrorMessage
+            self.data = str(message)
             return
         
         msg_dict = pickle.loads(raw_data)

@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 
-from message import *
+from clientProxy import *
+import thread
 import select
+import time
 import sys
-import threading
 
 
 class Server:
 
 	def __init__(self):
+		self.name = str(int(time.time() * 1000))
 		self.HOST = ''
 		self.PORT = 50000
 		self.backlog = 5
 		self.size = 1024
 		self.server = None
 		self.threads = []
+		self.clients = []
+		self.client_lock = thread.allocate_lock()
+		print '[ ] Server: ', self.name
 		
 	def open_socket(self):
 		try:
@@ -41,7 +46,7 @@ class Server:
 			
 				if s == self.server:
 					# Handle the server socket
-					c = ClientProxy(self.server.accept())
+					c = ClientProxy(self, self.server.accept())
 					c.start()
 					self.threads.append(c)
 					
@@ -54,54 +59,29 @@ class Server:
 		self.server.close()
 		for c in self.threads:
 			c.join()
-
-
-class ClientProxy(threading.Thread):
-
-	def __init__(self, (client, address)):
-		threading.Thread.__init__(self)
-		self.client = client
-		self.address = address
-		self.size = 1024
-		print 'Client:', address
-		
-	def run(self):
-		#print 'Running thread', self.ident
-		running = 1
-		
-		while running:
-		
-			data = self.client.recv(self.size)	
-			if data:
-				msg = Message()
-				msg_dict = pickle.loads(data)
-				msg.dict2msg(msg_dict)
-				print 'Received:', str(msg)
-				
-				if msg.type == 'ConnectMessage':
-					print 'CONNECT MESSAGE'
-				elif msg.type == 'SendMessage':
-					print 'SEND MESSAGE'
-				elif msg.type == 'AddClientMessage':
-					print 'ADD CLIENT MESSAGE'
-				elif msg.type == 'PingMessage':
-					print 'PING MESSAGE'
-				else:
-					print 'UNKNOWN MESSAGE'
-				
-				# Reply
-				msg.clientDst = msg.clientSrc
-				msg.clientSrc = ''
-				msg.serverSrc = msg.serverDst
-				msg.serverDst = ''
-				msg.reply(self.client)
-
-			self.client.close()
-			running = 0
-			
-		#print 'Exit thread', self.ident, '\n'
 		
 
+	def add_client(self, client_name):
+		self.client_lock.acquire()
+		if client_name not in self.clients:
+			self.clients.append(client_name)
+			print '[+] Added client', client_name
+		else:
+			print '[ ] Client', client_name, 'already in the list'
+		self.client_lock.release()
+
+
+	def rem_client(self, client_name):
+		self.client_lock.acquire()
+		if client_name in self.clients:
+			self.clients.remove(client_name)
+			print '[-] Removed client', client_name
+		else:
+			print '[ ] Client', client_name, 'not in the list'
+		self.client_lock.release()
+
+
+# Execution starts here
 if __name__ == "__main__":
 	s = Server()
 	s.run()
