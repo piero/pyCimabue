@@ -91,6 +91,7 @@ class Message:
         
         self.dict2msg(pickle.loads(raw_data))
         sock.close()
+        return self
         
 
     def recv(self, sock):

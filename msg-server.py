@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 
-from message import *
+from clientProxy import *
 import select
 import socket
 import sys
+import time
 
 
 class Server:
 
     def __init__(self, host = 'localhost', port = 50000):
+        self.name = str(int(time.time() * 1000))
         self.HOST = host
         self.PORT = port
         self.backlog = 5
         self.size = 1024
         self.clients = {}
+        print '[ ] Server:', self.name
 
     def run(self):
         try:
@@ -73,11 +76,10 @@ class Server:
                             print 'UNKNOWN MESSAGE'
                 
                         # Reply
-                        msg.clientDst = msg.clientSrc
-                        msg.clientSrc = ''
-                        msg.serverSrc = msg.serverDst
-                        msg.serverDst = ''
-                        msg.reply(s)
+                        reply = ConnectMessage()
+                        reply.clientDst = msg.clientSrc
+                        reply.serverSrc = self.name
+                        reply.reply(s)
                     else:
                         s.close()
                         input.remove(s)

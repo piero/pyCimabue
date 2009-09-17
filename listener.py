@@ -2,13 +2,15 @@ from message import *
 import threading
 import sys
 import select
+import Queue
 
 
 class Listener(threading.Thread):
 
-    def __init__(self, caller):
+    def __init__(self, client, caller):
         threading.Thread.__init__(self)
-        self.client = caller
+        self.client = client
+        self.caller = caller
         self.skt = None
         self.backlog = 5
         self.running = False
@@ -56,17 +58,18 @@ class Listener(threading.Thread):
                         msg_dict = pickle.loads(data)
                         msg.dict2msg(msg_dict)
                         print 'Received:', str(msg)
+                        self.caller.msg_queue.put(msg)
                 
-                        if msg.type == 'ConnectMessage':
-                            print 'CONNECT MESSAGE'
-                        elif msg.type == 'SendMessage':
-                            print 'SEND MESSAGE'
-                        elif msg.type == 'AddClientMessage':
-                            print 'ADD CLIENT MESSAGE'
-                        elif msg.type == 'PingMessage':
-                            print 'PING MESSAGE'
-                        else:
-                            print 'UNKNOWN MESSAGE'
+#                        if msg.type == 'ConnectMessage':
+#                            print 'CONNECT MESSAGE'
+#                        elif msg.type == 'SendMessage':
+#                            print 'SEND MESSAGE'
+#                        elif msg.type == 'AddClientMessage':
+#                            print 'ADD CLIENT MESSAGE'
+#                        elif msg.type == 'PingMessage':
+#                            print 'PING MESSAGE'
+#                        else:
+#                            print 'UNKNOWN MESSAGE'
                 
                         # Reply
                         msg.clientDst = msg.clientSrc
