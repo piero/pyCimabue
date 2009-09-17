@@ -63,9 +63,7 @@ class Server:
                 
                         if msg.type == 'ConnectMessage':
                             print 'CONNECT MESSAGE'
-                            self.clients[msg.clientSrc] = (address[0], msg.data)
-                            print '[+]', msg.clientSrc, ':', self.clients[msg.clientSrc]
-                            print len(self.clients), 'clients'
+                            self.addClient(name = msg.clientSrc, ip = address[0], port = msg.data)
                         elif msg.type == 'SendMessage':
                             print 'SEND MESSAGE'
                         elif msg.type == 'AddClientMessage':
@@ -86,7 +84,15 @@ class Server:
 
         # Exit
         server_skt.close()
-
+        
+        
+    def addClient(self, name, ip, port):
+        if name not in self.clients:
+            self.clients[name] = (ip, port)
+            print '[+]', name, ':', self.clients[name]
+        else:
+            print '[!]', name, 'already exists'
+    
 
 # Execution starts here
 if __name__ == "__main__":

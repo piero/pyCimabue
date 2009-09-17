@@ -8,11 +8,11 @@ import sys
 class ServerProxy:
 
     def __init__(self, host, port, caller):
-        self.host = host
-        self.port = port
+        self.server_ip = host
+        self.server_port = port
         self.client = caller
-        self.server = ''
-        self.connected = False
+        self.connected = False  # Are we connected to a Server?
+        self.server = ''        # Initialized when self.connected == True
         self.msg_queue = Queue()
         self.listener = Listener(self.client, self)
         self.executer = Executer(self.client, self)
@@ -22,7 +22,7 @@ class ServerProxy:
         msg = ConnectMessage()
         msg.clientSrc = self.client.name
         msg.data = str(self.client.client_port)
-        reply = msg.send(self.host, self.port)
+        reply = msg.send(self.server_ip, self.server_port)
 
         if msg.type != ErrorMessage:
             self.connected = True
@@ -41,7 +41,7 @@ class ServerProxy:
         msg.clientSrc = self.client.name
         msg.serverDst = self.server
         msg.data = message
-        msg.send(self.host, self.port)
+        msg.send(self.server_ip, self.server_port)
         if msg.type == ErrorMessage:
             self.print_error(msg.data)
         return msg
@@ -50,7 +50,7 @@ class ServerProxy:
     def quit(self):
         if self.executer.is_alive():
             print '[x] Stopping executer...'
-            self.msg_queue.put("x")
+            self.msg_queue.put(None)
             self.executer.join()
     
         if self.listener.is_alive():

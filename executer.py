@@ -19,7 +19,7 @@ class Executer(threading.Thread):
         while self.running:
             msg = self.caller.msg_queue.get()
 
-            if msg == "x":
+            if msg == None:
                 self.running = False
                 break
 

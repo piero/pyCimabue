@@ -14,6 +14,7 @@ class Listener(threading.Thread):
         self.skt = None
         self.backlog = 5
         self.running = False
+        self.SELECT_TIMEOUT = 1.0
     
     def open_socket(self):
         try:
@@ -35,7 +36,7 @@ class Listener(threading.Thread):
         self.running = True
         
         while self.running:
-            inputready, outputready, exceptready = select.select(input, [], [], 1.0)
+            inputready, outputready, exceptready = select.select(input, [], [], self.SELECT_TIMEOUT)
 
             for s in inputready:
     
