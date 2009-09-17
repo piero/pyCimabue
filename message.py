@@ -11,7 +11,7 @@ import logging
 class Message:
 
     def __init__(self):
-    	self.type = self.__class__.__name__
+        self.type = self.__class__.__name__
         self.clientSrc = ''
         self.clientDst = ''
         self.serverSrc = ''
@@ -32,7 +32,7 @@ class Message:
 
 
     def msg2dict(self):
-    	msg_dict = {'t': self.type}
+        msg_dict = {'t': self.type}
         msg_dict['cs'] = self.clientSrc
         msg_dict['cd'] = self.clientDst
         msg_dict['ss'] = self.serverSrc
@@ -42,7 +42,7 @@ class Message:
     
     
     def dict2msg(self, msg_dict):
-    	self.type = msg_dict['t']
+        self.type = msg_dict['t']
         self.clientSrc = msg_dict['cs']
         self.clientDst = msg_dict['cd']
         self.serverSrc = msg_dict['ss']
@@ -120,7 +120,7 @@ class Message:
 # Subclasses
 
 class ConnectMessage(Message):
-	pass
+    pass
     
 class SendMessage(Message):
     pass
@@ -132,4 +132,4 @@ class PingMessage(Message):
     pass
 
 class ErrorMessage(Message):
-	pass
+    pass
