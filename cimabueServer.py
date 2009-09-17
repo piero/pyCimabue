@@ -15,6 +15,7 @@ class Server:
         self.PORT = port
         self.backlog = 5
         self.size = 1024
+        self.SELECT_TIMEOUT = 1.0
         self.clients = {}
         print '[ ] Server:', self.name
 
@@ -36,7 +37,7 @@ class Server:
         running = 1
 
         while running:
-            inputready, outputready, exceptready = select.select(input, [], [])
+            inputready, outputready, exceptready = select.select(input, [], [], self.SELECT_TIMEOUT)
 
             for s in inputready:
     
@@ -53,42 +54,23 @@ class Server:
             
                 else:
                     # Handle a client socket
-                    data = s.recv(self.size)
-            
-                    if data:
-                        msg = Message()
-                        msg_dict = pickle.loads(data)
-                        msg.dict2msg(msg_dict)
-                        print 'Received:', str(msg)
-                
-                        if msg.type == 'ConnectMessage':
-                            print 'CONNECT MESSAGE'
-                            self.addClient(name = msg.clientSrc, ip = address[0], port = msg.data)
-                        elif msg.type == 'SendMessage':
-                            print 'SEND MESSAGE'
-                        elif msg.type == 'AddClientMessage':
-                            print 'ADD CLIENT MESSAGE'
-                        elif msg.type == 'PingMessage':
-                            print 'PING MESSAGE'
-                        else:
-                            print 'UNKNOWN MESSAGE'
-                
-                        # Reply
-                        reply = ConnectMessage()
-                        reply.clientDst = msg.clientSrc
-                        reply.serverSrc = self.name
-                        reply.reply(s)
-                    else:
-                        s.close()
-                        input.remove(s)
+                    client = ClientProxy(self, s, address[0])
+                    client.start()
 
         # Exit
         server_skt.close()
+        for c in self.clients:
+            print 'client', c, '...'
+            if self.clients[c].is_alive():
+                print '[x] Killing client', c, '...'
+                self.clients[c].running = False
+                self.clients[c].socket.close()
+                self.clients[c].join()
+
         
-        
-    def addClient(self, name, ip, port):
+    def addClient(self, name, client):
         if name not in self.clients:
-            self.clients[name] = (ip, port)
+            self.clients[name] = client
             print '[+]', name, ':', self.clients[name]
         else:
             print '[!]', name, 'already exists'

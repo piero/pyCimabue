@@ -10,13 +10,15 @@ import logging
 
 class Message:
 
-    def __init__(self):
+    def __init__(self, socket = None):
         self.type = self.__class__.__name__
         self.clientSrc = ''
         self.clientDst = ''
         self.serverSrc = ''
         self.serverDst = ''
         self.data = ''
+        self.skt = socket
+        self.use_external_socket = False
         self.MAX_SIZE = 2048
         self.RECV_TIMEOUT = 5
 
@@ -51,17 +53,18 @@ class Message:
 
 
     def send(self, dstAddress, dstPort):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((dstAddress, dstPort))
-
-        except socket.error, (value, message):
-            if sock:
-                sock.close()
-            logging.error("[!] Message.send(): Socket error: " + str(message))
-            self.type = ErrorMessage
-            self.data = str(message)
-            return
+        if self.skt == None:
+            try:
+                self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.skt.connect((dstAddress, dstPort))
+    
+            except socket.error, (value, message):
+                if self.skt:
+                    self.skt.close()
+                logging.error("[!] Message.send(): Socket error: " + str(message))
+                self.type = ErrorMessage
+                self.data = str(message)
+                return
 
         line = pickle.dumps(self.msg2dict())
         sock.send(line)

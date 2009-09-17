@@ -1,38 +1,33 @@
 from message import *
-from listener import *
-from executer import *
-from Queue import *
 import threading
 import sys
 
-class ClientProxy:
+class ClientProxy(threading.Thread):
 
-    def __init__(self, server, (socket, address)):
+    def __init__(self, server, socket, address):
         threading.Thread.__init__(self)
         self.server = server
-        self.socket = client
+        self.socket = socket
         self.address = address
         self.size = 1024
         self.connected = False
-        self.msg_queue = Queue()
-        self.listener = Listener(self.client, self)
-        self.executer = Executer(self.client, self)
+        self.running = False
         
         
     def run(self):
-        running = 1
+        self.running = True
         
-        while running:
-        
+        while self.running:        
             data = self.socket.recv(self.size)  
             if data:
                 msg = Message()
                 msg_dict = pickle.loads(data)
                 msg.dict2msg(msg_dict)
                 print 'Received:', str(msg)
-                
+            
                 if msg.type == 'ConnectMessage':
                     print 'CONNECT MESSAGE'
+                    self.server.addClient(msg.clientSrc, self)
                 elif msg.type == 'SendMessage':
                     print 'SEND MESSAGE'
                 elif msg.type == 'AddClientMessage':
