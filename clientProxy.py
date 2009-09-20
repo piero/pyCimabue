@@ -24,7 +24,7 @@ class ClientProxy(threading.Thread):
 			except socket.error, (value, message):
 				if self.socket:
 					self.socket.close()
-				logging.error("Socket error: " + str(message))
+				#logging.error("Socket error: " + str(message))
 				if self.connected:
 					self.connected = False
 					self.server.remClient(self)
@@ -45,6 +45,16 @@ class ClientProxy(threading.Thread):
 				
 				elif msg.type == 'SendMessage':
 					print 'SEND MESSAGE'
+					destClient = self.server.getClient(msg.clientDst)
+					if destClient != None:
+						# TODO TODO TODO
+						pass
+					else:
+						reply = ErrorMessage()
+						reply.clientDst = msg.clientSrc
+						reply.serverSrc = self.server.name
+						reply.reply(self.socket)
+						break
 				
 				elif msg.type == 'AddClientMessage':
 					print 'ADD CLIENT MESSAGE'

@@ -47,9 +47,10 @@ class ServerProxy:
 		return msg
 
 		
-	def sendMessage(self, message):
+	def sendMessage(self, dest, message):
 		msg = SendMessage(self.skt)
 		msg.clientSrc = self.client.name
+		msg.clientDst = dest
 		msg.serverDst = self.server
 		msg.data = message
 		msg.send(self.server_ip, self.server_port)
@@ -70,7 +71,6 @@ class ServerProxy:
 			print '[x] Stopping listener...'
 			self.listener.running = False
 			self.listener.join()
-		   
 
 	def print_error(self, message):
 		print '[', self.__class__.__name__, '] Error:', message

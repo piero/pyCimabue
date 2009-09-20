@@ -70,7 +70,7 @@ class Server:
 				self.clients[c].socket.close()
 				self.clients[c].join()
 
-		
+	
 	def addClient(self, client):
 		if client.name not in self.clients:
 			self.clients[client.name] = client
@@ -84,6 +84,12 @@ class Server:
 			print '[-]', name, ':', len(self.clients), 'clients left'
 		else:
 			print '[!]', name, 'not found'
+			
+	def getClient(self, name):
+		if name in self.clients:
+			return self.clients[name]
+		else:
+			return None
 
 
 # Execution starts here

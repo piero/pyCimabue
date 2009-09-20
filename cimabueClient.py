@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from serverProxy import *
+from observer import *
 import time
 import sys
 
@@ -18,24 +19,31 @@ class Client:
 	def run(self):
 		# Connect to the Server
 		server = ServerProxy(host = self.server_ip, port = self.server_port, caller = self)
+		reply = None
 		reply = server.connect()
 	
-		if reply.type == ErrorMessage:
+		if reply == None or reply.type == ErrorMessage:
 			print '[!] Error connecting to server (', self.server_ip, ':', self.server_port, ')'
 			print reply.data
 			return
 
 		# Wait for input
 		while 1:
-			sys.stdout.write('% ')
-	
-			# Read from stdin
-			line = sys.stdin.readline()
-			if line == '\n':
+			# Destination
+			sys.stdout.write('to: ')
+			dest = sys.stdin.readline()
+			if dest == '\n':
+				server.quit()
+				break
+			
+			# Message
+			sys.stdout.write('msg: ')
+			msg = sys.stdin.readline()
+			if msg == '\n':
 				server.quit()
 				break
 	
-			reply = server.sendMessage(line)
+			reply = server.sendMessage(dest, msg)
 			print 'Got reply:', reply
 
 
