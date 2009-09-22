@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<server_list>
+
+	<server>
+		<ip>127.0.0.1</ip>
+		<port>50000</port>
+	</server>
+	
+	<server>
+		<ip>127.0.0.1</ip>
+		<port>51000</port>
+	</server>
+	
+	<server>
+		<ip>127.0.0.1</ip>
+		<port>52000</port>
+	</server>
+	
+	<server>
+		<ip>127.0.0.1</ip>
+		<port>53000</port>
+	</server>
+	
+	<server>
+		<ip>127.0.0.1</ip>
+		<port>54000</port>
+	</server>
+
+</server_list>
