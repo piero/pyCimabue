@@ -16,12 +16,18 @@ class Server(ActiveObject):
 	MASTER = 'MasterServer'
 	BACKUP = 'BackupServer'
 	IDLE = 'IdleServer'
-	
+
 	def __init__(self, role = 'undefined'):
 		ActiveObject.__init__(self)
 		self.__name = str(int(time.time() * 1000))
 		self.__strategy = None
 		print 'SERVER %s' % self.__name
+		
+		
+	def __del__(self):
+		if self.__strategy != None:
+			print 'Quitting strategy...'
+			self.__strategy.quit()
 	
 	
 	def set_role(self, role, master):
@@ -41,8 +47,8 @@ class Server(ActiveObject):
 	
 
 	def _process_request(self, msg, address):
-		print 'Processing request:', msg
-		print 'from', address
+		#print 'Processing request:', msg
+		#print 'from', address
 		
 		# Dynamically call the proper function
 		try:

@@ -13,11 +13,11 @@ class Message:
 	def __init__(self, use_socket = None, priority = 2, wait_for_reply = True):
 		self.type = self.__class__.__name__
 		self.priority = priority
-		self.clientSrc = ''
-		self.clientDst = ''
-		self.serverSrc = ''
-		self.serverDst = ''
-		self.data = ''
+		self.clientSrc = ""
+		self.clientDst = ""
+		self.serverSrc = ""
+		self.serverDst = ""
+		self.data = ""
 		self.skt = use_socket
 		self.__wait_for_reply = wait_for_reply
 		self.__use_external_socket = False
@@ -45,26 +45,26 @@ class Message:
 
 
 	def msg2dict(self):
-		msg_dict = {'t': self.type}
-		msg_dict['p'] = self.priority
-		msg_dict['cs'] = self.clientSrc
-		msg_dict['cd'] = self.clientDst
-		msg_dict['ss'] = self.serverSrc
-		msg_dict['sd'] = self.serverDst
-		msg_dict['d'] = self.data
-		msg_dict['rp'] = str(self.__wait_for_reply)
+		msg_dict = {"t": self.type}
+		msg_dict["p"] = self.priority
+		msg_dict["cs"] = self.clientSrc
+		msg_dict["cd"] = self.clientDst
+		msg_dict["ss"] = self.serverSrc
+		msg_dict["sd"] = self.serverDst
+		msg_dict["d"] = self.data
+		msg_dict["rp"] = str(self.__wait_for_reply)
 		return msg_dict
 	
 	
 	def dict2msg(self, msg_dict):
-		self.type = msg_dict['t']
-		self.priority = msg_dict['p']
-		self.clientSrc = msg_dict['cs']
-		self.clientDst = msg_dict['cd']
-		self.serverSrc = msg_dict['ss']
-		self.serverDst = msg_dict['sd']
-		self.data = msg_dict['d']
-		if msg_dict['rp'] == 'True':
+		self.type = msg_dict["t"]
+		self.priority = msg_dict["p"]
+		self.clientSrc = msg_dict["cs"]
+		self.clientDst = msg_dict["cd"]
+		self.serverSrc = msg_dict["ss"]
+		self.serverDst = msg_dict["sd"]
+		self.data = msg_dict["d"]
+		if msg_dict["rp"] == "True":
 			self.__wait_for_reply = True
 		else:
 			self.__wait_for_reply = False
