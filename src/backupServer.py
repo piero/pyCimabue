@@ -66,10 +66,11 @@ class BackupServer:
 		reply = ErrorMessage(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()
 		reply.serverDst = msg.serverSrc
-		reply.clientSrc = self.__master[1]	# Master IP address
-		reply.clientDst = str(self.__master[2])	# Master Port
-		reply.data = self.__master[0]		# Master Name
+		reply.clientSrc = self.__master[1]			# Master IP address
+		reply.clientDst = str(self.__master[2])		# Master Port
+		reply.data = self.__master[0]				# Master Name
 		return reply
+	
 	
 	def _process_SyncServerList(self, msg):
 		print "Received ServerList from %s" % msg.serverSrc
@@ -78,18 +79,18 @@ class BackupServer:
 		s_port = pickle.loads(msg.data)
 		
 		for i in range(len(s_name)):
-			print "%d) %s %s:%d" % (i, s_name[i], s_ip[i], s_port[i])
 			self.__servers[s_name[i]] = (s_ip[i], int(s_port[i]))
-			
+		
+		# Print Server List (debug)
+		print 'SERVER LIST'
 		for s in self.__servers.keys():
-			print "%s - %s:%d" % (s, (self.__servers[s])[0], (self.__servers[s])[1])
-		# TODO
-#		reply = ErrorMessage(msg.skt, msg.priority)
-#		reply.serverSrc = self.__server.get_name()
-#		reply.clientDst = msg.clientSrc
-#		reply.data = "Unknown message type: " + msg.type
-#		return reply
-	
+			print "[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1])
+
+		reply = SyncServerList(msg.skt, msg.priority)
+		reply.serverSrc = self.__server.get_name()
+		reply.serverDst = msg.serverSrc
+		return reply
+
 	def _process_SyncClientList(self, msg):
 		# TODO
 		reply = ErrorMessage(msg.skt, msg.priority)

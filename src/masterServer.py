@@ -15,7 +15,9 @@ class MasterServer:
 		self.__clients = {}		# List of Clients
 		self.__servers = {}		# List of Servers
 		self.__backup = None
+		self.sync_queue = Queue()
 		self.__sync_manager = SyncManager(self)
+		self.__sync_manager.start()
 		print 'Behaviour:', self.__server.MASTER
 		
 	
@@ -80,12 +82,12 @@ class MasterServer:
 			self.__backup = (msg.serverSrc, (msg.clientSrc, int(msg.clientDst)))
 			print 'Set backup: %s (%s:%s)' % (self.__backup[0],  self.__backup[1][0], str(self.__backup[1][1]))
 			reply = WelcomeBackup(msg.skt, msg.priority)
-			self.__sync_manager.start()
 		else:
 			reply = WelcomeIdle(msg.skt, msg.priority)
+			self.sync_queue.put('S')
 		
 		self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
-		self.__print_server_list()
+		#self.__print_server_list()
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
@@ -101,7 +103,7 @@ class MasterServer:
 			
 	
 	def sync_server_list(self):
-		msg = SyncServerList(priority=0, wait_for_reply=False)
+		msg = SyncServerList(priority=0)
 		msg.serverSrc = self.__server.get_name()
 		msg.serverDst = self.__backup[0]
 		
