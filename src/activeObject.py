@@ -20,7 +20,7 @@ class ActiveObject(threading.Thread):
 
 
 	def add_request(self, msg, address):
-		if (msg.priority >= 0) and (msg.priority <= 3):
+		if msg.priority >= 0:
 			self._requests.put((msg.priority, (msg, address)))
 		else:
 			print '[!] Request ignored: wrong priority (%d)' % msg.priority
