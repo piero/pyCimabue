@@ -24,8 +24,7 @@ class MasterServer:
 	def quit(self):
 		print '[x] Quitting SyncManager...'
 		self.__sync_manager.quit()
-		if self.__sync_manager.isActive():
-			self.__sync_manager.join(2.0)
+		self.__sync_manager.join(5.0)
 		
 	
 	def _process_ConnectMessage(self, msg):

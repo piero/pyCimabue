@@ -22,9 +22,10 @@ class Server(ActiveObject):
 		self.__name = str(int(time.time() * 1000))
 		self.__strategy = None
 		print 'SERVER %s' % self.__name
-		
-		
-	def __del__(self):
+	
+	
+	def kill(self):
+		self._running = False
 		if self.__strategy != None:
 			print 'Quitting strategy...'
 			self.__strategy.quit()

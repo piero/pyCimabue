@@ -13,9 +13,9 @@ class SyncManager(threading.Thread):
 		
 	
 	def run(self):
-		self.running = True
+		self.__running = True
 		
-		while self.running:
+		while self.__running:
 			cmd = ''
 			try:
 				cmd = self.__server.sync_queue.get(block=True, timeout=1.0)
