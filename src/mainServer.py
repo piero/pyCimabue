@@ -9,7 +9,7 @@ Created on 20/set/2009
 from listener import *
 from server import *
 import time
-from xmlParser import *
+from utilities.xmlParser import *
 
 
 # Set Server role

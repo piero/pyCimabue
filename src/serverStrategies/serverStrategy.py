@@ -5,7 +5,7 @@ Created on 26/set/2009
 '''
 
 from message import *
-from pingAgent import *
+from utilities.pingAgent import *
 
 class ServerStrategy:
 	

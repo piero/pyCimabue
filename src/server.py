@@ -5,18 +5,18 @@ Created on 20/set/2009
 '''
 
 from activeObject import *
-from masterServer import *
-from backupServer import *
-from idleServer import *
-from pingAgent import *
+from serverStrategies.masterStrategy import *
+from serverStrategies.backupStrategy import *
+from serverStrategies.idleStrategy import *
+from utilities.pingAgent import *
 import time
 
 class Server(ActiveObject):
 	
 	# Server roles
-	MASTER = 'MasterServer'
-	BACKUP = 'BackupServer'
-	IDLE = 'IdleServer'
+	MASTER = 'MasterStrategy'
+	BACKUP = 'BackupStrategy'
+	IDLE = 'IdleStrategy'
 
 	def __init__(self, role = 'undefined'):
 		ActiveObject.__init__(self)
@@ -46,7 +46,7 @@ class Server(ActiveObject):
 			print "[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role
 			return
 		
-		if self.__strategy.__class__.__name__ != 'MasterServer' and master != (None, None, None):
+		if self.__strategy.__class__.__name__ != 'MasterStrategy' and master != (None, None, None):
 			self.__strategy.set_master(master)
 			self.__ping_agent = PingAgent(self, is_master=False)
 		else:

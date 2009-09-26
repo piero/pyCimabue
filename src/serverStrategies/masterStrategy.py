@@ -5,10 +5,10 @@ Created on 22 Sep 2009
 '''
 
 from serverStrategy import *
-from syncManager import *
+from utilities.syncManager import *
 
 
-class MasterServer(ServerStrategy):
+class MasterStrategy(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server
