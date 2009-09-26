@@ -40,5 +40,5 @@ class SyncManager(threading.Thread):
 		print '[x] SyncManager'
 		
 	
-	def quit(self):
+	def kill(self):
 		self.__running = False

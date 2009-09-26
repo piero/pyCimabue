@@ -4,16 +4,16 @@ Created on 22 Sep 2009
 @author: piero
 '''
 
-from message import *
+from serverStrategy import *
 from syncManager import *
 
 
-class MasterServer:
+class MasterServer(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server
-		self.__clients = {}		# List of Clients
-		self.__servers = {}		# List of Servers: (name, (ip, port))
+		self.__clients = {}			# List of Clients
+		self.__servers = {}			# List of Servers: (name, (ip, port))
 		self.__servers_ping = {}	# Servers ping timestamps (name, timestamp)
 		self.__backup = None
 		self.sync_queue = Queue()
@@ -22,9 +22,9 @@ class MasterServer:
 		print 'Behaviour:', self.__server.MASTER
 		
 	
-	def quit(self):
+	def exit(self):
 		print '[x] Quitting SyncManager...'
-		self.__sync_manager.quit()
+		self.__sync_manager.kill()
 		self.__sync_manager.join(5.0)
 		
 	

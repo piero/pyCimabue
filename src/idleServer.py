@@ -4,10 +4,10 @@ Created on 22 Sep 2009
 @author: piero
 '''
 
-from message import *
+from serverStrategy import *
 
 
-class IdleServer:
+class IdleServer(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server

@@ -8,6 +8,7 @@ from activeObject import *
 from masterServer import *
 from backupServer import *
 from idleServer import *
+from pingAgent import *
 import time
 
 class Server(ActiveObject):
@@ -28,12 +29,12 @@ class Server(ActiveObject):
 	def kill(self):
 		self._running = False
 		if self.__strategy != None:
-			print 'Quitting strategy...'
-			self.__strategy.quit()
+			print 'Exiting strategy...'
+			self.__strategy.exit()
 			
-		if self.__ping_agent != None and self.__ping_agent.isAlive():
-			print 'Quitting ping agent...'
-			self.__ping_agent.quit()
+		if self.__ping_agent != None and self.__ping_agent.is_alive():
+			print 'Killing Ping Agent...'
+			self.__ping_agent.kill()
 			self.__ping_agent.join(2.0)
 			
 	
@@ -47,6 +48,15 @@ class Server(ActiveObject):
 		
 		if self.__strategy.__class__.__name__ != 'MasterServer' and master != (None, None, None):
 			self.__strategy.set_master(master)
+			self.__ping_agent = PingAgent(self, is_master=False)
+		else:
+			self.__ping_agent = PingAgent(self, is_master=True)
+		
+		self.__ping_agent.start()
+		
+	
+	def get_role(self):
+		return self.__strategy
 		
 	
 	def get_name(self):
