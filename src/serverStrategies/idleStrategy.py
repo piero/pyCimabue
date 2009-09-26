@@ -19,6 +19,10 @@ class IdleStrategy(ServerStrategy):
 		self.__master = master
 		print "Set master: %s (%s:%d)" % (self.__master[0], self.__master[1], self.__master[2])
 		
+		
+	def get_master(self):
+		return self.__master
+		
 	
 	def _process_ConnectMessage(self, msg):
 		# TODO
