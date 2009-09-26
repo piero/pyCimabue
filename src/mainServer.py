@@ -61,6 +61,7 @@ def query_server_role(server_name, host_and_port):
 		return (Server.MASTER, (None, None, None))
 
 
+### EXECUTION STARTS HERE ###
 
 # Parse command-line args
 listen_ip, listen_port = None, None
