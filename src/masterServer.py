@@ -86,7 +86,6 @@ class MasterServer:
 			self.sync_queue.put('S')
 		
 		self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
-		#self.__print_server_list()
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
@@ -95,12 +94,7 @@ class MasterServer:
 		reply.serverDst = msg.serverSrc
 		return reply
 	
-	
-	def __print_server_list(self):
-		for s in self.__servers.keys():
-			print "[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1])
-			
-	
+
 	def sync_server_list(self):
 		msg = SyncServerList(priority=0)
 		msg.serverSrc = self.__server.get_name()

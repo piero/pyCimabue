@@ -48,9 +48,6 @@ class Server(ActiveObject):
 	
 
 	def _process_request(self, msg, address):
-		#print 'Processing request:', msg
-		#print 'from', address
-		
 		# Dynamically call the proper function
 		try:
 			function_name = "_process_" + msg.type
