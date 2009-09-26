@@ -87,10 +87,9 @@ class MasterStrategy(ServerStrategy):
 			reply = WelcomeBackup(msg.skt, msg.priority)
 		else:
 			reply = WelcomeIdle(msg.skt, msg.priority)
-			self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)
-		
-		# Add new Server
-		self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
+			# Add new Server
+			self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
+			self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)		
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
