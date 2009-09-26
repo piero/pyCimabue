@@ -82,7 +82,7 @@ class Message:
 				logging.error("[!] Message.send(): Socket error: " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
-				return
+				return None
 
 		line = pickle.dumps(self.msg2dict())
 		self.skt.send(line)
@@ -101,7 +101,7 @@ class Message:
 				logging.error("[!] Message.send(): " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
-				return
+				return None
 			
 			except socket.error, (value, message):
 				if self.skt:
@@ -109,7 +109,7 @@ class Message:
 				logging.error("[!] Message.send(): " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
-				return
+				return None
 			
 			self.dict2msg(pickle.loads(raw_data))
 			if self.__use_external_socket == False:
@@ -129,7 +129,7 @@ class Message:
 			logging.error("[!] Message.recv(): Socket error: " + str(message))
 			self.type = ErrorMessage
 			self.data = str(message)
-			return
+			return None
 		
 		msg_dict = pickle.loads(raw_data)
 		self.dict2msg(msg_dict)

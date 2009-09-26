@@ -4,6 +4,7 @@ Created on 22 Sep 2009
 @author: piero
 '''
 
+from slavePingAgent import *
 from message import *
 
 
@@ -14,16 +15,30 @@ class BackupServer:
 		self.__master = (None, None, None)
 		self.__servers = {}
 		self.__clients = {}
+		self.__ping_agent = SlavePingAgent(self)
 		print 'Behaviour:', self.__server.BACKUP
 		
 		
 	def quit(self):
-		pass
+		if self.__ping_agent.isAlive():
+			print "[x] Quitting Ping Agent..."
+			self.__ping_agent.quit()
+			self.__ping_agent.join(2.0)
+
 		
 		
 	def set_master(self, master):
 		self.__master = master
+		self.__ping_agent.start()
 		print "Set master: %s (%s:%d)" % (self.__master[0], self.__master[1], self.__master[2])
+		
+		
+	def get_master(self):
+		return self.__master
+	
+	
+	def get_server_name(self):
+		return self.__server.get_name()
 		
 	
 	def _process_ConnectMessage(self, msg):

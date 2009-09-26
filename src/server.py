@@ -21,6 +21,7 @@ class Server(ActiveObject):
 		ActiveObject.__init__(self)
 		self.__name = str(int(time.time() * 1000))
 		self.__strategy = None
+		self.__ping_agent = None
 		print 'SERVER %s' % self.__name
 	
 	
@@ -29,7 +30,12 @@ class Server(ActiveObject):
 		if self.__strategy != None:
 			print 'Quitting strategy...'
 			self.__strategy.quit()
-	
+			
+		if self.__ping_agent != None and self.__ping_agent.isAlive():
+			print 'Quitting ping agent...'
+			self.__ping_agent.quit()
+			self.__ping_agent.join(2.0)
+			
 	
 	def set_role(self, role, master):
 		# Dynamically create the proper class

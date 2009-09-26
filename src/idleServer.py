@@ -14,10 +14,6 @@ class IdleServer:
 		self.__master = (None, None, None)
 		print 'Behaviour:', self.__server.IDLE
 		
-		
-	def quit(self):
-		pass
-	
 	
 	def set_master(self, master):
 		self.__master = master

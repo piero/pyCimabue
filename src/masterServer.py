@@ -13,7 +13,8 @@ class MasterServer:
 	def __init__(self, server):
 		self.__server = server
 		self.__clients = {}		# List of Clients
-		self.__servers = {}		# List of Servers
+		self.__servers = {}		# List of Servers: (name, (ip, port))
+		self.__servers_ping = {}	# Servers ping timestamps (name, timestamp)
 		self.__backup = None
 		self.sync_queue = Queue()
 		self.__sync_manager = SyncManager(self)
@@ -58,6 +59,9 @@ class MasterServer:
 		print 'Processing PingMessage'
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
+		# Update ping list
+		print self.__servers.get(msg.serverSrc)
+		
 		reply = PingMessage(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()
 		reply.clientDst = msg.clientSrc
@@ -83,7 +87,7 @@ class MasterServer:
 			reply = WelcomeBackup(msg.skt, msg.priority)
 		else:
 			reply = WelcomeIdle(msg.skt, msg.priority)
-			self.sync_queue.put('S')
+			self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)
 		
 		self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
 
