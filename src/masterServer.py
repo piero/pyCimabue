@@ -89,6 +89,7 @@ class MasterServer(ServerStrategy):
 			reply = WelcomeIdle(msg.skt, msg.priority)
 			self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)
 		
+		# Add new Server
 		self.__servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
 
 		reply.clientSrc = self.__server.ip				# Master IP address

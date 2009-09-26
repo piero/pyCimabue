@@ -39,8 +39,8 @@ def query_server_role(server_name, host_and_port):
 		msg.clientSrc = host_and_port[0]		# Our IP address
 		msg.clientDst = str(host_and_port[1])	# Our Port
 		reply = msg.send()
-		print "1) Sent message to %s:%d" % (output_list[i][0], int(output_list[i][1]))
-		connected = True
+		if reply != None:
+			connected = True
 			
 		if skt: skt.close()
 	
@@ -91,7 +91,7 @@ server.set_role(server_role, master)
 
 
 # Sleep
-while listener.isAlive():
+while listener.is_alive():
 	time.sleep(1)
 
 # Exit
