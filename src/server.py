@@ -38,7 +38,9 @@ class Server(ActiveObject):
 			self.__ping_agent.join(2.0)
 			
 	
-	def set_role(self, role, master):
+	def set_role(self, role, master=(None, None, None)):
+		print 'Setting role:', role
+		
 		# Dynamically create the proper class
 		try:
 			self.__strategy = globals()[role](self)

@@ -12,6 +12,7 @@ class MasterStrategy(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server
+		self.name = self.__server.MASTER
 		self.__clients = {}			# List of Clients
 		self.__servers = {}			# List of Servers: (name, (ip, port))
 		self.__servers_ping = {}	# Servers ping timestamps (name, timestamp)
@@ -19,7 +20,7 @@ class MasterStrategy(ServerStrategy):
 		self.sync_queue = Queue()
 		self.__sync_manager = SyncManager(self)
 		self.__sync_manager.start()
-		print 'Behaviour:', self.__server.MASTER
+		print 'Behaviour:', self.name
 		
 	
 	def exit(self):
@@ -56,7 +57,7 @@ class MasterStrategy(ServerStrategy):
 
 	
 	def _process_PingMessage(self, msg):
-		print 'Processing PingMessage'
+		#print 'Processing PingMessage'
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		# Update ping list

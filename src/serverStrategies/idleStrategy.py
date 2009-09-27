@@ -11,8 +11,9 @@ class IdleStrategy(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server
+		self.name = self.__server.IDLE
 		self.__master = (None, None, None)
-		print 'Behaviour:', self.__server.IDLE
+		print 'Behaviour:', self.name
 		
 	
 	def set_master(self, master):

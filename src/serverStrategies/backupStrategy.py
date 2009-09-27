@@ -11,10 +11,11 @@ class BackupStrategy(ServerStrategy):
 	
 	def __init__(self, server):
 		self.__server = server
+		self.name = self.__server.BACKUP
 		self.__master = (None, None, None)
 		self.__servers = {}
 		self.__clients = {}
-		print 'Behaviour:', self.__server.BACKUP
+		print 'Behaviour:', self.name
 		
 		
 	def set_master(self, master):

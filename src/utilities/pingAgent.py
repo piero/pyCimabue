@@ -35,6 +35,9 @@ class PingAgent(threading.Thread):
 				# Master not replying: trigger rescue procedure
 				if reply == None:
 					print "Master %s not replying!" % master[0]
+					print 'SET', self.__caller.get_role().name, '-->', self.__caller.MASTER
+					if self.__caller.get_role().name == self.__caller.BACKUP:
+						self.__caller.set_role(self.__caller.MASTER)
 			
 		print "[x] PingAgent"
 	
