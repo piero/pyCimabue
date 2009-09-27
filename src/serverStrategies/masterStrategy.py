@@ -21,12 +21,12 @@ class MasterStrategy(ServerStrategy):
 		self.__sync_manager = SyncManager(self)
 		self.__sync_manager.start()
 		print 'Behaviour:', self.name
-		
+	
 	
 	def exit(self):
-		print '[x] Quitting SyncManager...'
+		print 'Killing SyncManager...'
 		self.__sync_manager.kill()
-		self.__sync_manager.join(5.0)
+		self.__sync_manager.join(2.0)
 		
 	
 	def _process_ConnectMessage(self, msg):

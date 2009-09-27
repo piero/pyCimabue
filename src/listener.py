@@ -22,6 +22,7 @@ class Listener(threading.Thread):
 		self.__SELECT_TIMEOUT = 1.0
 		self.__RECV_TIMEOUT = 5.0
 		self.__executioner = executioner
+		self.__executioner.set_listener(self)
 	
 	
 	def get_host_and_port(self):
