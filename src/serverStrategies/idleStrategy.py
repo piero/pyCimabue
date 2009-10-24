@@ -9,17 +9,14 @@ from serverStrategy import *
 
 class IdleStrategy(ServerStrategy):
 	
-	def __init__(self, server):
+	def __init__(self, server, master=None):
 		self.__server = server
 		self.name = self.__server.IDLE
-		self.__master = (None, None, None)
-		print 'Behaviour:', self.name
-		
-	
-	def set_master(self, master):
 		self.__master = master
-		print "Set master: %s (%s:%d)" % (self.__master[0], self.__master[1], self.__master[2])
-		
+		print "Behaviour: %s" % self.name
+		if self.__master != None:
+			print "(master: %s)" % self.__master[0]
+
 		
 	def get_master(self):
 		return self.__master
@@ -69,3 +66,26 @@ class IdleStrategy(ServerStrategy):
 		reply.data = "Unknown message type: " + msg.type
 		return reply
 	
+	
+	def _process_BecomeMasterMessage(self, msg):
+		new_backup = (msg.serverSrc, (msg.clientSrc, int(msg.clientDst)))
+		print "Becoming Master (backup: %s (%s:%d)" % (new_backup[0], new_backup[1][0], new_backup[1][1])
+		self.__server.set_role(self.__server.MASTER, new_backup)
+		
+		reply = Message(msg.skt, msg.priority)
+		reply.serverSrc = self.__server.get_name()
+		reply.clientDst = msg.clientSrc
+		reply.data = ""
+		return reply
+	
+	
+	def _process_UpdateServerMessage(self, msg):
+		new_master = (msg.data, (msg.clientSrc, int(msg.clientDst)))
+		print "Updating Master: %s (%s:%d)" % (new_master[0], new_master[1][0], new_master[1][1])
+		self.__master = new_master
+		
+		reply = Message(msg.skt, msg.priority)
+		reply.serverSrc = self.__server.get_name()
+		reply.clientDst = msg.clientSrc
+		reply.data = ""
+		return reply

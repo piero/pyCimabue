@@ -17,6 +17,10 @@ class PingAgent(threading.Thread):
 		self.__interval = interval
 		self.is_master = is_master
 		self.__running = False
+		if self.is_master:
+			print '[o] PingAgent (Master)'
+		else:
+			print '[o] PingAgent (Slave)'
 		
 	
 	def run(self):
@@ -27,18 +31,18 @@ class PingAgent(threading.Thread):
 			
 			if self.is_master == False:
 				master = self.__caller.get_role().get_master()
+				print "Pinging Master: %s (%s:%d)" % (master[0], master[1][0], master[1][1])
 				msg = PingMessage(priority=1)
 				msg.serverSrc = self.__caller.get_name()
 				msg.serverDst = master[0]
-				reply = msg.send(master[1], master[2])
+				reply = msg.send(master[1][0], master[1][1])
 
 				# Master not replying: trigger rescue procedure
 				if reply == None:
 					print "Master %s not replying!" % master[0]
+					
 					if self.__caller.get_role().name == self.__caller.BACKUP:
-						self.__caller.set_role(self.__caller.MASTER)
-					else:
-						self.__caller.query_role()
+						self.__caller.get_role().elect_new_master()
 			
 		print "[x] PingAgent"
 	

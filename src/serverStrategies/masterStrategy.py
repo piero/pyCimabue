@@ -10,24 +10,29 @@ from utilities.syncManager import *
 
 class MasterStrategy(ServerStrategy):
 	
-	def __init__(self, server):
+	def __init__(self, server, backup=None):
 		self.__server = server
 		self.name = self.__server.MASTER
 		self.__clients = {}			# List of Clients
 		self.__servers = {}			# List of Servers: (name, (ip, port))
 		self.__servers_ping = {}	# Servers ping timestamps (name, timestamp)
-		self.__backup = None
+		self.__backup = backup
 		self.sync_queue = Queue()
 		self.__sync_manager = SyncManager(self)
 		self.__sync_manager.start()
-		print 'Behaviour:', self.name
+		print "Behaviour: %s" % self.name
+		if self.__backup != None:
+			print "(backup: %s)" % self.__backup[0]
 	
 	
 	def exit(self):
-		print 'Killing SyncManager...'
-		self.__sync_manager.kill()
-		self.__sync_manager.join(2.0)
-		
+		if self.__sync_manager != None and self.__sync_manager.is_alive():
+			print '[x] Killing SyncManager...'
+			self.__sync_manager.kill()
+			self.__sync_manager.join(2.0)
+			del self.__sync_manager
+			self.__sync_manager = None
+
 	
 	def _process_ConnectMessage(self, msg):
 		print 'Processing ConnectMessage'

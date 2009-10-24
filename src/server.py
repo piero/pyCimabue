@@ -31,28 +31,36 @@ class Server(ActiveObject):
 	def kill(self):
 		self._running = False
 		if self.__strategy != None:
-			print 'Exiting strategy...'
+			print '[x] Exiting strategy...'
 			self.__strategy.exit()
 			
 		if self.__ping_agent != None and self.__ping_agent.is_alive():
-			print 'Killing Ping Agent...'
+			print '[x] Killing Ping Agent...'
 			self.__ping_agent.kill()
 			self.__ping_agent.join(2.0)
+			del self.__ping_agent
+			self.__ping_agent = None
 			
 	
 	def set_listener(self, listener):
 		self.__listener = listener
 	
 	
-	def set_role(self, role, master=(None, None, None)):
+	def set_role(self, role, arg=None):
 		print 'Setting role:', role
+		
+		if self.__ping_agent != None and self.__ping_agent.is_alive():
+			self.__ping_agent.kill()
+			self.__ping_agent.join(None)
+			del self.__ping_agent
+			self.__ping_agent = None
 		
 		if self.__strategy != None:
 			self.__strategy.exit()
 		
 		# Dynamically create the proper class
 		try:
-			self.__strategy = globals()[role](self)
+			self.__strategy = globals()[role](self, arg)
 		except KeyError:
 			print "[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role
 			return
@@ -60,9 +68,11 @@ class Server(ActiveObject):
 		if self.__ping_agent != None:
 			self.__ping_agent.kill()
 			del self.__ping_agent
+			self.__ping_agent = None
 		
-		if (self.__strategy.__class__.__name__ != Server.MASTER) and (master != (None, None, None)):
-			self.__strategy.set_master(master)
+		if (self.__strategy.__class__.__name__ != Server.MASTER):
+		#if (self.__strategy.__class__.__name__ != Server.MASTER) and (arg != None):
+			#self.__strategy.set_master(arg)
 			self.__ping_agent = PingAgent(self, is_master=False)
 		else:
 			self.__ping_agent = PingAgent(self, is_master=True)
@@ -131,18 +141,18 @@ class Server(ActiveObject):
 			msg.clientDst = str(self.port)			# Our Port
 			reply = msg.send()
 			if reply != None:
-				connected = True
-				
+				connected = True				
 			if skt: skt.close()
-		
-			print 'REPLY:', str(reply)
-			
+
 			if reply.type == 'ErrorMessage':
 				continue	# Oops, it wasn't the Master Server
+			
 			elif reply.type == 'WelcomeBackup':
-				self.set_role(Server.BACKUP, master=(reply.data, reply.clientSrc, int(reply.clientDst)))
+				self.set_role(Server.BACKUP, (reply.data, (reply.clientSrc, int(reply.clientDst))))
+			
 			elif reply.type == 'WelcomeIdle':
-				self.set_role(Server.IDLE, master=(reply.data, reply.clientSrc, int(reply.clientDst)))
+				self.set_role(Server.IDLE, (reply.data, (reply.clientSrc, int(reply.clientDst))))
+			
 			else:
 				print 'UNKNOWN ROLE:', reply.type
 				self.set_role(reply.type)
@@ -152,3 +162,6 @@ class Server(ActiveObject):
 		# We're the Master Server
 		if connected == False:
 			self.set_role(Server.MASTER)
+	
+	
+		

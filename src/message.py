@@ -175,3 +175,13 @@ class SyncServerList(Message):
 
 class SyncClientList(Message):
 	pass
+
+# Server update
+class BecomeMasterMessage(Message):
+	pass
+
+class BecomeBackupMessage(Message):
+	pass
+
+class UpdateServerMessage(Message):
+	pass
