@@ -51,20 +51,25 @@ class BackupStrategy(ServerStrategy):
 			else:
 				print "Candidate %s is down" % candidate[0]
 				
-		# In any case, remove the server from our list
-		if len(self.__servers) > 0:
-			del self.__servers[candidate[0]]
+			# In any case, remove the server from our list
+			if len(self.__servers) > 0:
+				del self.__servers[candidate[0]]
 						
 		# If the list is empty, we become the new Master
 		if len(self.__servers) == 0 and self.__master == None:
 			print 'No more candidates: I am the Master'
-			self.__server.set_role(self.__server.MASTER)
 			
-		# 2) Notify connected Clients
-		# TODO
+			# TODO: Notify connected Clients
+			
+			# Become Master
+			self.__server.set_role(self.__server.MASTER)
 		
-		# 3) Notify Idle Servers
-		self.__notify_servers()
+		else:
+			# 2) Notify connected Clients
+			# TODO
+		
+			# 3) Notify Idle Servers
+			self.__notify_servers()
 	
 	
 	def __notify_servers(self):
@@ -81,6 +86,7 @@ class BackupStrategy(ServerStrategy):
 				notify.clientSrc = self.__master[1][0]		# Master IP
 				notify.clientDst = str(self.__master[1][1])	# Master port
 				notify.data = self.__master[0]				# Master name
+				
 			
 			srv = self.__servers[s]
 			print "Notifying %s (%s:%d)..." % (s, srv[0], srv[1])

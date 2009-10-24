@@ -17,11 +17,7 @@ class PingAgent(threading.Thread):
 		self.__interval = interval
 		self.is_master = is_master
 		self.__running = False
-		if self.is_master:
-			print '[o] PingAgent (Master)'
-		else:
-			print '[o] PingAgent (Slave)'
-		
+	
 	
 	def run(self):
 		self.__running = True

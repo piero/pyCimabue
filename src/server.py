@@ -30,33 +30,30 @@ class Server(ActiveObject):
 	
 	def kill(self):
 		self._running = False
+		self._kill_dependancies()
+			
+	
+	def _kill_dependancies(self):
 		if self.__strategy != None:
 			print '[x] Exiting strategy...'
 			self.__strategy.exit()
 			
-		if self.__ping_agent != None and self.__ping_agent.is_alive():
+		if self.__ping_agent != None:
 			print '[x] Killing Ping Agent...'
 			self.__ping_agent.kill()
-			self.__ping_agent.join(2.0)
-			del self.__ping_agent
+			if self.__ping_agent.is_alive():
+				self.__ping_agent.join(2.0)
+			#del self.__ping_agent
 			self.__ping_agent = None
-			
+	
 	
 	def set_listener(self, listener):
 		self.__listener = listener
 	
 	
 	def set_role(self, role, arg=None):
+		self._kill_dependancies()
 		print 'Setting role:', role
-		
-		if self.__ping_agent != None and self.__ping_agent.is_alive():
-			self.__ping_agent.kill()
-			self.__ping_agent.join(None)
-			del self.__ping_agent
-			self.__ping_agent = None
-		
-		if self.__strategy != None:
-			self.__strategy.exit()
 		
 		# Dynamically create the proper class
 		try:
@@ -64,11 +61,6 @@ class Server(ActiveObject):
 		except KeyError:
 			print "[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role
 			return
-
-		if self.__ping_agent != None:
-			self.__ping_agent.kill()
-			del self.__ping_agent
-			self.__ping_agent = None
 		
 		if (self.__strategy.__class__.__name__ != Server.MASTER):
 		#if (self.__strategy.__class__.__name__ != Server.MASTER) and (arg != None):

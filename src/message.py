@@ -142,7 +142,7 @@ class Message:
 		logging.debug("[ ] Replied to message: \"" + line + "\"")
 
 
-# Subclasses
+# Subclasses (message types)
 
 class ConnectMessage(Message):
 	pass
