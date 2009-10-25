@@ -5,7 +5,6 @@ Created on 22 Sep 2009
 '''
 
 from serverStrategy import *
-from utilities.syncManager import *
 
 
 class MasterStrategy(ServerStrategy):
@@ -17,23 +16,11 @@ class MasterStrategy(ServerStrategy):
 		self.servers = {}			# List of Servers: (name, (ip, port))
 		self.servers_ping = {}		# Servers ping timestamps (name, last_ping_ts)
 		self.backup = backup
-		#self.sync_queue = Queue()
-		#self.__sync_manager = SyncManager(self)
-		#self.__sync_manager.start()
+		
 		print "Behaviour: %s" % self.name
 		if backup != None:
 			print "(backup: %s (%s:%d)" % (self.backup[0], self.backup[1], self.backup[2])
 	
-	
-	def exit(self):
-#		if self.__sync_manager != None and self.__sync_manager.is_alive():
-#			print '[x] Killing SyncManager...'
-#			self.__sync_manager.kill()
-#			self.__sync_manager.join(2.0)
-#			del self.__sync_manager
-#			self.__sync_manager = None
-		pass
-
 	
 	def _process_ConnectMessage(self, msg):
 		print 'Processing ConnectMessage'
