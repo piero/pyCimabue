@@ -54,7 +54,8 @@ class PingAgent(threading.Thread):
 					
 					if self.__caller.get_role().name == self.__caller.BACKUP:
 						self.__caller.get_role().elect_new_master()
-						
+				
+				# Master has changed, make it know we're here
 				elif reply.type == "ErrorMessage":
 					print "Master %s doesn't know me" % master[0]
 					self.__caller.query_role()
