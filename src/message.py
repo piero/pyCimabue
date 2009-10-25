@@ -136,7 +136,7 @@ class Message:
 
 
 	def reply(self, skt):
-		print 'Message: Replying on socket', str(skt.fileno())
+		logging.info("Message: Replying on socket " + str(skt.fileno()))
 		line = pickle.dumps(self.msg2dict())
 		skt.send(line)
 		logging.debug("[ ] Replied to message: \"" + line + "\"")

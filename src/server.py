@@ -37,13 +37,11 @@ class Server(ActiveObject):
 		if self.__strategy != None:
 			print '[x] Exiting strategy...'
 			self.__strategy.exit()
-			
-		if self.__ping_agent != None:
+		
+		if self.__ping_agent != None and self.__ping_agent.is_alive():
 			print '[x] Killing Ping Agent...'
 			self.__ping_agent.kill()
-			if self.__ping_agent.is_alive():
-				self.__ping_agent.join(2.0)
-			#del self.__ping_agent
+			self.__ping_agent.join()
 			self.__ping_agent = None
 	
 	
@@ -52,7 +50,11 @@ class Server(ActiveObject):
 	
 	
 	def set_role(self, role, arg=None):
-		self._kill_dependancies()
+		#self._kill_dependancies()
+		if self.__strategy != None:
+			print '[x] Exiting strategy...'
+			self.__strategy.exit()
+		
 		print 'Setting role:', role
 		
 		# Dynamically create the proper class
@@ -63,13 +65,18 @@ class Server(ActiveObject):
 			return
 		
 		if (self.__strategy.__class__.__name__ != Server.MASTER):
-		#if (self.__strategy.__class__.__name__ != Server.MASTER) and (arg != None):
-			#self.__strategy.set_master(arg)
-			self.__ping_agent = PingAgent(self, is_master=False)
+			if self.__ping_agent == None:
+				self.__ping_agent = PingAgent(caller=self, as_master=False)
+			else:
+				self.__ping_agent.is_master = False
 		else:
-			self.__ping_agent = PingAgent(self, is_master=True)
-			
-		self.__ping_agent.start()
+			if self.__ping_agent == None:
+				self.__ping_agent = PingAgent(caller=self, as_master=True)
+			else:
+				self.__ping_agent.is_master = True
+		
+		if self.__ping_agent.isAlive() == False:
+			self.__ping_agent.start()
 		
 	
 	def get_role(self):
