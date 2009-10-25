@@ -33,6 +33,7 @@ class PingAgent(threading.Thread):
 						if k != self.__caller.get_role().backup[0]:
 							del self.__caller.get_role().servers[k]
 							print "Removed %s (%d servers left)" % (k, len(self.__caller.get_role().servers))
+							self.__caller.get_role().sync_server_list()
 						else:
 							del self.__caller.get_role().backup
 							self.__caller.get_role().backup = None

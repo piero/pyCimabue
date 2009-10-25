@@ -161,6 +161,3 @@ class Server(ActiveObject):
 		# We're the Master Server
 		if connected == False:
 			self.set_role(Server.MASTER)
-	
-	
-		

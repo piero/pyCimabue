@@ -148,6 +148,8 @@ class BackupStrategy(ServerStrategy):
 		s_ip = pickle.loads(msg.clientDst)
 		s_port = pickle.loads(msg.data)
 		
+		self.__servers.clear()
+		
 		for i in range(len(s_name)):
 			self.__servers[s_name[i]] = (s_ip[i], int(s_port[i]))
 		

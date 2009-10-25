@@ -17,21 +17,22 @@ class MasterStrategy(ServerStrategy):
 		self.servers = {}			# List of Servers: (name, (ip, port))
 		self.servers_ping = {}		# Servers ping timestamps (name, last_ping_ts)
 		self.backup = backup
-		self.sync_queue = Queue()
-		self.__sync_manager = SyncManager(self)
-		self.__sync_manager.start()
+		#self.sync_queue = Queue()
+		#self.__sync_manager = SyncManager(self)
+		#self.__sync_manager.start()
 		print "Behaviour: %s" % self.name
 		if backup != None:
 			print "(backup: %s (%s:%d)" % (self.backup[0], self.backup[1], self.backup[2])
 	
 	
 	def exit(self):
-		if self.__sync_manager != None and self.__sync_manager.is_alive():
-			print '[x] Killing SyncManager...'
-			self.__sync_manager.kill()
-			self.__sync_manager.join(2.0)
-			del self.__sync_manager
-			self.__sync_manager = None
+#		if self.__sync_manager != None and self.__sync_manager.is_alive():
+#			print '[x] Killing SyncManager...'
+#			self.__sync_manager.kill()
+#			self.__sync_manager.join(2.0)
+#			del self.__sync_manager
+#			self.__sync_manager = None
+		pass
 
 	
 	def _process_ConnectMessage(self, msg):
@@ -62,7 +63,6 @@ class MasterStrategy(ServerStrategy):
 
 	
 	def _process_PingMessage(self, msg):
-		#print 'Processing PingMessage'
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		if msg.serverSrc != self.backup[0] and self.servers.get(msg.serverSrc) == None:
@@ -99,12 +99,14 @@ class MasterStrategy(ServerStrategy):
 			reply = WelcomeBackup(msg.skt, msg.priority)
 		else:
 			reply = WelcomeIdle(msg.skt, msg.priority)
+			
 			# Add new Server
 			self.servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
 			self.servers_ping[msg.serverSrc] = time.time()
 			s = self.servers[msg.serverSrc]
 			print 'Added: %s (%s:%d) [%d]' % (msg.serverSrc, s[0], s[1], self.servers_ping[msg.serverSrc])
-			self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)		
+			#self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)
+			self.sync_server_list()	
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
@@ -122,6 +124,7 @@ class MasterStrategy(ServerStrategy):
 		s_names = []
 		s_ip = []
 		s_port = []
+		
 		for s in self.servers.keys():
 			s_names.append(s)
 			s_ip.append((self.servers[s])[0])
