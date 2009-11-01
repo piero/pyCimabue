@@ -39,8 +39,6 @@ if __name__=="__main__":
 	
 	
 	# Set Server server_role
-	#(server_role, master) = server.query_server_role(listener.get_host_and_port())
-	#server.set_role(server_role, master)
 	server.query_role()
 	
 	

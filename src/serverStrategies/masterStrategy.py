@@ -92,7 +92,6 @@ class MasterStrategy(ServerStrategy):
 			self.servers_ping[msg.serverSrc] = time.time()
 			s = self.servers[msg.serverSrc]
 			print 'Added: %s (%s:%d) [%d]' % (msg.serverSrc, s[0], s[1], self.servers_ping[msg.serverSrc])
-			#self.sync_queue.put(SyncManager.SYNC_SERVER_LIST)
 			self.sync_server_list()	
 
 		reply.clientSrc = self.__server.ip				# Master IP address
