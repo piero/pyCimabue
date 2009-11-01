@@ -13,9 +13,9 @@ class IdleStrategy(ServerStrategy):
 		self.__server = server
 		self.name = self.__server.IDLE
 		self.__master = master
-		self.output("Behaviour: %s" % self.name())
+		self.__server.output("Behaviour: %s" % self.name)
 		if self.__master != None:
-			self.output("(master: %s)" % self.__master[0])
+			self.__server.output("(master: %s)" % self.__master[0])
 
 		
 	def get_master(self):
@@ -69,7 +69,9 @@ class IdleStrategy(ServerStrategy):
 	
 	def _process_BecomeMasterMessage(self, msg):
 		new_backup = (msg.serverSrc, msg.clientSrc, int(msg.clientDst))
-		print "Becoming Master (backup: %s (%s:%d)" % (new_backup[0], new_backup[1], new_backup[2])
+		self.__server.output("Becoming Master (backup: %s (%s:%d)" % (new_backup[0],
+																	new_backup[1],
+																	new_backup[2]))
 		self.__server.set_role(self.__server.MASTER, new_backup)
 		
 		reply = Message(msg.skt, msg.priority)
@@ -81,7 +83,9 @@ class IdleStrategy(ServerStrategy):
 	
 	def _process_UpdateServerMessage(self, msg):
 		new_master = (msg.data, (msg.clientSrc, int(msg.clientDst)))
-		print "Updating Master: %s (%s:%d)" % (new_master[0], new_master[1][0], new_master[1][1])
+		self.__server.output("Updating Master: %s (%s:%d)" % (new_master[0],
+															new_master[1][0],
+															new_master[1][1]))
 		self.__master = new_master
 		
 		reply = Message(msg.skt, msg.priority)

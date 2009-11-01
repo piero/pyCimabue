@@ -46,13 +46,13 @@ class BackupStrategy(ServerStrategy):
 			# If successful, we can break the loop
 			if reply != None and reply.type != ErrorMessage:
 				self.__master = candidate
-				self.output("New Master is %s (%s:%d)" % (self.__master[0],
+				self.__server.output("New Master is %s (%s:%d)" % (self.__master[0],
 														self.__master[1][0],
 														self.__master[1][1]),
 							logging.INFO)
 				break
 			else:
-				self.output("Candidate %s is down" % candidate[0])
+				self.__server.output("Candidate %s is down" % candidate[0])
 				
 			# In any case, remove the server from our list
 			if len(self.__servers) > 0:
@@ -60,7 +60,7 @@ class BackupStrategy(ServerStrategy):
 						
 		# If the list is empty, we become the new Master
 		if len(self.__servers) == 0 and self.__master == None:
-			self.output("No more candidates: I am the Master", logging.INFO)
+			self.__server.output("No more candidates: I am the Master", logging.INFO)
 			
 			# TODO: Notify connected Clients
 			
@@ -92,11 +92,11 @@ class BackupStrategy(ServerStrategy):
 				
 			
 			srv = self.__servers[s]
-			self.output("Notifying %s (%s:%d)..." % (s, srv[0], srv[1]))
+			self.__server.output("Notifying %s (%s:%d)..." % (s, srv[0], srv[1]))
 			reply = notify.send(srv[0], srv[1])
 			
 			if reply == None or reply == ErrorMessage:
-				self.output("Error notifying %s (%s:%d)" % (s, srv[0], srv[1]), logging.ERROR)
+				self.__server.output("Error notifying %s (%s:%d)" % (s, srv[0], srv[1]), logging.ERROR)
 	
 	
 	def _process_ConnectMessage(self, msg):
@@ -159,7 +159,7 @@ class BackupStrategy(ServerStrategy):
 		# Print Server List (debug)
 		self.output("SERVER LIST")
 		for s in self.__servers.keys():
-			self.output("[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1]))
+			self.__server.output("[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1]))
 
 		reply = SyncServerList(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()
