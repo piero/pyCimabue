@@ -7,6 +7,7 @@ Created on 14 Sep 2009
 import socket
 import pickle
 import logging
+from utilities.nullHandler import *
 
 class Message:
 
@@ -23,9 +24,17 @@ class Message:
 		self.__use_external_socket = False
 		self.__MAX_SIZE = 2048
 		self.__RECV_TIMEOUT = 5
+
+		# Logging
+		logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
+		self.logger = logging.getLogger('ActiveObject')
+		self.logger.setLevel(logging.DEBUG)
+		h = NullHandler()
+		self.logger.addHandler(h)
+		
 		if self.skt != None:
 			self.__use_external_socket = True
-			logging.debug("Message: Using external socket:" + str(self.skt.fileno()))
+			self.logger.debug("Message: Using external socket:" + str(self.skt.fileno()))
 		
 
 	def __str__(self):
@@ -79,14 +88,14 @@ class Message:
 			except socket.error, (value, message):
 				if self.skt:
 					self.skt.close()
-				logging.error("[!] Message.send(): Socket error: " + str(message))
+				self.logger.error("[!] Message.send(): Socket error: " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
 
 		line = pickle.dumps(self.msg2dict())
 		self.skt.send(line)
-		logging.debug("[ ] Sent message: \"" + line + "\"")
+		self.logger.debug("[ ] Sent message: \"" + str(self) + "\"")
 		
 		if self.__wait_for_reply:
 			# Receive reply
@@ -98,7 +107,7 @@ class Message:
 			except socket.timeout, message:
 				if self.skt:
 					self.skt.close()
-				logging.error("[!] Message.send(): " + str(message))
+				self.logger.error("[!] Message.send(): " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
@@ -106,7 +115,7 @@ class Message:
 			except socket.error, (value, message):
 				if self.skt:
 					self.skt.close()
-				logging.error("[!] Message.send(): " + str(message))
+				self.logger.error("[!] Message.send(): " + str(message))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
@@ -126,7 +135,7 @@ class Message:
 		except socket.error, (value, message):
 			if sock:
 				sock.close()
-			logging.error("[!] Message.recv(): Socket error: " + str(message))
+			self.logger.error("[!] Message.recv(): Socket error: " + str(message))
 			self.type = ErrorMessage
 			self.data = str(message)
 			return None
@@ -136,10 +145,10 @@ class Message:
 
 
 	def reply(self, skt):
-		logging.info("Message: Replying on socket " + str(skt.fileno()))
+		self.logger.info("Message: Replying on socket " + str(skt.fileno()))
 		line = pickle.dumps(self.msg2dict())
 		skt.send(line)
-		logging.debug("[ ] Replied to message: \"" + line + "\"")
+		self.logger.debug("[ ] Replied to message: \"" + str(self) + "\"")
 
 
 # Subclasses (message types)

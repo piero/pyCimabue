@@ -15,9 +15,9 @@ class BackupStrategy(ServerStrategy):
 		self.__master = master
 		self.__servers = {}
 		self.__clients = {}
-		print "Behaviour: %s" % self.name
+		self.__server.output("Behaviour: %s" % self.name)
 		if self.__master != None:
-			print "(master: %s)" % self.__master[0]
+			self.__server.output("(master: %s)" % self.__master[0])
 
 
 	def get_master(self):
@@ -25,7 +25,7 @@ class BackupStrategy(ServerStrategy):
 	
 	
 	def elect_new_master(self):
-		print 'Electing a new Master...'
+		self.__server.output("Electing a new Master...", logging.INFO)
 		# 1) Elect a new Master
 		self.__master = None
 		
@@ -33,7 +33,7 @@ class BackupStrategy(ServerStrategy):
 			# Get a candidate
 			curr = self.__servers.iteritems()
 			candidate = curr.next()
-			print "Candidate: [%s] %s:%d" % (candidate[0], candidate[1][0], candidate[1][1])
+			self.__server.output(("Candidate: [%s] %s:%d" % (candidate[0], candidate[1][0], candidate[1][1])), logging.INFO)
 		
 			# Notify it
 			elect_msg = BecomeMasterMessage(priority=1)
@@ -46,10 +46,13 @@ class BackupStrategy(ServerStrategy):
 			# If successful, we can break the loop
 			if reply != None and reply.type != ErrorMessage:
 				self.__master = candidate
-				print "New Master is %s (%s:%d)" % (self.__master[0], self.__master[1][0], self.__master[1][1])
+				self.output("New Master is %s (%s:%d)" % (self.__master[0],
+														self.__master[1][0],
+														self.__master[1][1]),
+							logging.INFO)
 				break
 			else:
-				print "Candidate %s is down" % candidate[0]
+				self.output("Candidate %s is down" % candidate[0])
 				
 			# In any case, remove the server from our list
 			if len(self.__servers) > 0:
@@ -57,7 +60,7 @@ class BackupStrategy(ServerStrategy):
 						
 		# If the list is empty, we become the new Master
 		if len(self.__servers) == 0 and self.__master == None:
-			print 'No more candidates: I am the Master'
+			self.output("No more candidates: I am the Master", logging.INFO)
 			
 			# TODO: Notify connected Clients
 			
@@ -73,7 +76,7 @@ class BackupStrategy(ServerStrategy):
 	
 	
 	def __notify_servers(self):
-	    for s in self.__servers.keys():
+		for s in self.__servers.keys():
 			notify = UpdateServerMessage(priority=1)
 			notify.serverSrc = self.__server.get_name()
 			notify.serverDst = s[0]
@@ -89,11 +92,11 @@ class BackupStrategy(ServerStrategy):
 				
 			
 			srv = self.__servers[s]
-			print "Notifying %s (%s:%d)..." % (s, srv[0], srv[1])
+			self.output("Notifying %s (%s:%d)..." % (s, srv[0], srv[1]))
 			reply = notify.send(srv[0], srv[1])
 			
 			if reply == None or reply == ErrorMessage:
-				print "Error notifying %s (%s:%d)" % (s, srv[0], srv[1])
+				self.output("Error notifying %s (%s:%d)" % (s, srv[0], srv[1]), logging.ERROR)
 	
 	
 	def _process_ConnectMessage(self, msg):
@@ -143,7 +146,7 @@ class BackupStrategy(ServerStrategy):
 	
 	
 	def _process_SyncServerList(self, msg):
-		print "Received ServerList from %s" % msg.serverSrc
+		self.output(("Received ServerList from %s" % msg.serverSrc), logging.INFO)
 		s_name = pickle.loads(msg.clientSrc)
 		s_ip = pickle.loads(msg.clientDst)
 		s_port = pickle.loads(msg.data)
@@ -154,9 +157,9 @@ class BackupStrategy(ServerStrategy):
 			self.__servers[s_name[i]] = (s_ip[i], int(s_port[i]))
 		
 		# Print Server List (debug)
-		print 'SERVER LIST'
+		self.output("SERVER LIST")
 		for s in self.__servers.keys():
-			print "[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1])
+			self.output("[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1]))
 
 		reply = SyncServerList(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()

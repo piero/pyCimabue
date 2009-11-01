@@ -13,9 +13,9 @@ class IdleStrategy(ServerStrategy):
 		self.__server = server
 		self.name = self.__server.IDLE
 		self.__master = master
-		print "Behaviour: %s" % self.name
+		self.output("Behaviour: %s" % self.name())
 		if self.__master != None:
-			print "(master: %s)" % self.__master[0]
+			self.output("(master: %s)" % self.__master[0])
 
 		
 	def get_master(self):

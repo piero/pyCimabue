@@ -23,6 +23,15 @@ class Listener(threading.Thread):
 		self.__RECV_TIMEOUT = 5.0
 		self.__executioner = executioner
 		self.__executioner.set_listener(self)
+		
+		# Logging
+		self.__logger = logging.getLogger('Listener')
+		self.__logger.setLevel(logging.DEBUG)
+		console = logging.StreamHandler()
+		console.setLevel(logging.DEBUG)
+		formatter = logging.Formatter('[%(levelname)s] %(message)s')
+		console.setFormatter(formatter)
+		self.__logger.addHandler(console)
 	
 	
 	def get_host_and_port(self):
@@ -39,7 +48,7 @@ class Listener(threading.Thread):
 			listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			listen_skt.bind((self.__HOST, self.__PORT))
-			print 'Listening on %s:%d...' % (self.__HOST, self.__PORT)
+			self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
 			listen_skt.listen(self.__backlog)
 
 		except socket.error, (value, message):

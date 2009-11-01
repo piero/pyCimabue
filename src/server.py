@@ -25,7 +25,7 @@ class Server(ActiveObject):
 		self.__listener = None
 		self.__strategy = None
 		self.__ping_agent = None
-		print 'SERVER %s' % self.__name
+		self.output(("SERVER %s" % self.__name), logging.INFO)
 	
 	
 	def kill(self):
@@ -35,11 +35,11 @@ class Server(ActiveObject):
 	
 	def _kill_dependancies(self):
 		if self.__strategy != None:
-			print '[x] Exiting strategy...'
+			self.output("[x] Exiting strategy...")
 			self.__strategy.exit()
 		
 		if self.__ping_agent != None and self.__ping_agent.is_alive():
-			print '[x] Killing Ping Agent...'
+			self.output("[x] Killing Ping Agent...")
 			self.__ping_agent.kill()
 			self.__ping_agent.join()
 			self.__ping_agent = None
@@ -50,18 +50,17 @@ class Server(ActiveObject):
 	
 	
 	def set_role(self, role, arg=None):
-		#self._kill_dependancies()
 		if self.__strategy != None:
-			print '[x] Exiting strategy...'
+			self.output("[x] Exiting strategy...")
 			self.__strategy.exit()
 		
-		print 'Setting role:', role
+		self.output("Setting role: %s" % role)
 		
 		# Dynamically create the proper class
 		try:
 			self.__strategy = globals()[role](self, arg)
 		except KeyError:
-			print "[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role
+			self.output(("[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role), logging.CRITICAL)
 			return
 		
 		if (self.__strategy.__class__.__name__ != Server.MASTER):
@@ -108,7 +107,7 @@ class Server(ActiveObject):
 		if msg.serverDst == self.__name:
 			return True
 		else:
-			print "[!] Request for %s, but I am %s" % (msg.serverDst, self.__name)
+			self.output(("[!] Request for %s, but I am %s" % (msg.serverDst, self.__name)), logging.WARNING)
 			return False
 		
 	
@@ -123,7 +122,7 @@ class Server(ActiveObject):
 			if output_list[i][0] == host_and_port[0] and int(output_list[i][1]) == host_and_port[1]:
 				continue
 			
-			print "[%d] Trying %s:%s..." % (i, output_list[i][0], output_list[i][1])
+			self.output("[%d] Trying %s:%s..." % (i, output_list[i][0], output_list[i][1]))
 			
 			# Look for the Master Server
 			skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,7 +152,7 @@ class Server(ActiveObject):
 				self.set_role(Server.IDLE, (reply.data, (reply.clientSrc, int(reply.clientDst))))
 			
 			else:
-				print 'UNKNOWN ROLE:', reply.type
+				self.output(("UNKNOWN ROLE: %s" % reply.type), logging.ERROR)
 				self.set_role(reply.type)
 			# We're done
 			return

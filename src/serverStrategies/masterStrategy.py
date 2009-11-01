@@ -17,15 +17,15 @@ class MasterStrategy(ServerStrategy):
 		self.servers_ping = {}		# Servers ping timestamps (name, last_ping_ts)
 		self.backup = backup
 		
-		print "Behaviour: %s" % self.name
+		self.__server.output("Behaviour: %s" % self.name)
 		if backup != None:
-			print "(backup: %s (%s:%d)" % (self.backup[0], self.backup[1], self.backup[2])
+			self.__server.output("(backup: %s (%s:%d)" % (self.backup[0], self.backup[1], self.backup[2]))
 	
 	
 	def _process_ConnectMessage(self, msg):
-		print 'Processing ConnectMessage'
+		self.__server.output("Processing ConnectMessage")
 		self.clients[msg.clientSrc] = msg.data
-		print '[+] Added: %s: %s' % (msg.clientSrc, str(self.clients[msg.clientSrc]))
+		self.__server.output("[+] Added: %s: %s" % (msg.clientSrc, str(self.clients[msg.clientSrc])))
 		reply = ConnectMessage(msg.skt, msg.priority)
 		reply.clientDst = msg.clientSrc
 		reply.serverSrc = self.__server.get_name()
@@ -33,7 +33,7 @@ class MasterStrategy(ServerStrategy):
 	
 	
 	def _process_SendMessage(self, msg):
-		print 'Processing SendMessage'
+		self.__server.output("Processing SendMessage")
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		if msg.clientDst in self.clients.keys():
@@ -53,7 +53,7 @@ class MasterStrategy(ServerStrategy):
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		if msg.serverSrc != self.backup[0] and self.servers.get(msg.serverSrc) == None:
-			print 'Received Ping from unknown %s' % msg.serverSrc
+			self.__server.output("Received Ping from unknown %s" % msg.serverSrc)
 			return ErrorMessage(msg.skt)
 		
 		# Update ping list
@@ -67,7 +67,7 @@ class MasterStrategy(ServerStrategy):
 		
 	
 	def _process_ErrorMessage(self, msg):
-		print 'Processing ErrorMessage'
+		self.__server.output("Processing ErrorMessage")
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		reply = ErrorMessage(msg.skt, msg.priority)
@@ -77,12 +77,15 @@ class MasterStrategy(ServerStrategy):
 	
 	
 	def _process_HelloMessage(self, msg):
-		print 'Processing HelloMessage'
+		self.__server.output("Processing HelloMessage")
 		
 		if self.backup == None:
 			self.backup = (msg.serverSrc, msg.clientSrc, int(msg.clientDst))
 			self.servers_ping[msg.serverSrc] = time.time()
-			print 'Set backup: %s (%s:%d) [%d]' % (self.backup[0], self.backup[1], self.backup[2], self.servers_ping[msg.serverSrc])
+			self.__server.output("Set backup: %s (%s:%d) [%d]" % (self.backup[0],
+																self.backup[1],
+																self.backup[2],
+																self.servers_ping[msg.serverSrc]))
 			reply = WelcomeBackup(msg.skt, msg.priority)
 		else:
 			reply = WelcomeIdle(msg.skt, msg.priority)
@@ -91,7 +94,10 @@ class MasterStrategy(ServerStrategy):
 			self.servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
 			self.servers_ping[msg.serverSrc] = time.time()
 			s = self.servers[msg.serverSrc]
-			print 'Added: %s (%s:%d) [%d]' % (msg.serverSrc, s[0], s[1], self.servers_ping[msg.serverSrc])
+			self.__server.output("Added: %s (%s:%d) [%d]" % (msg.serverSrc,
+															s[0],
+															s[1],
+															self.servers_ping[msg.serverSrc]))
 			self.sync_server_list()	
 
 		reply.clientSrc = self.__server.ip				# Master IP address

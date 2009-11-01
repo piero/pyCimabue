@@ -27,6 +27,7 @@ if __name__=="__main__":
 	
 	# Create Server, Listener and start
 	server = Server()
+	server.logger.setLevel(logging.DEBUG)
 	
 	if listen_ip != None:
 		listener = Listener(executioner=server, host=listen_ip, port=listen_port)
