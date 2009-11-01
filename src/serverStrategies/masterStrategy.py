@@ -24,9 +24,11 @@ class MasterStrategy(ServerStrategy):
 	
 	def _process_ConnectMessage(self, msg):
 		self.__server.output("Processing ConnectMessage")
-		self.clients[msg.clientSrc] = msg.data
-		self.__server.output("[+] Added: %s: %s" % (msg.clientSrc, str(self.clients[msg.clientSrc])))
-		reply = ConnectMessage(msg.skt, msg.priority)
+		self.clients[msg.clientSrc] = (msg.serverDst, int(msg.data))
+		self.__server.output("[+] Added client %s (%s:%d)" % (msg.clientSrc,
+															self.clients[msg.clientSrc][0],
+															self.clients[msg.clientSrc][1]))
+		reply = Message(msg.skt, msg.priority)
 		reply.clientDst = msg.clientSrc
 		reply.serverSrc = self.__server.get_name()
 		return reply

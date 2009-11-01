@@ -116,7 +116,7 @@ class Server(ActiveObject):
 		output_list = parser.get_output_list()
 		connected = False
 		
-		for i in range(len(output_list)):		
+		for i in range(len(output_list)):
 			# Skip ourselves
 			host_and_port = self.__listener.get_host_and_port()
 			if output_list[i][0] == host_and_port[0] and int(output_list[i][1]) == host_and_port[1]:

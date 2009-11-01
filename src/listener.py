@@ -8,6 +8,7 @@ import select
 import socket
 import sys
 from activeObject import *
+from utilities.nullHandler import *
 import threading
 
 
@@ -25,13 +26,11 @@ class Listener(threading.Thread):
 		self.__executioner.set_listener(self)
 		
 		# Logging
+		logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
 		self.__logger = logging.getLogger('Listener')
 		self.__logger.setLevel(logging.DEBUG)
-		console = logging.StreamHandler()
-		console.setLevel(logging.DEBUG)
-		formatter = logging.Formatter('[%(levelname)s] %(message)s')
-		console.setFormatter(formatter)
-		self.__logger.addHandler(console)
+		h = NullHandler()
+		self.__logger.addHandler(h)
 	
 	
 	def get_host_and_port(self):
