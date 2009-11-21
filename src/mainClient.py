@@ -11,7 +11,7 @@ from client import *
 import sys
 
 
-class ClientInterface(threading.Thread):
+class ClientOutput(threading.Thread):
 	
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -32,7 +32,7 @@ class ClientInterface(threading.Thread):
 		while self.__running:
 			pass
 		
-		print '[x] ClientInterface'
+		print '[x] ClientOutput'
 
 
 class ClientInput(threading.Thread):
@@ -51,7 +51,7 @@ class ClientInput(threading.Thread):
 			#print '>>>'
 			
 			try:
-				inputready, outputready, exceptready = select.select([sys.stdin], [], [], 1)
+				inputready, outputready, exceptready = select.select([sys.stdin], [], [], 1.0)
 			except select.error, (value, message):
 				print "[!] SELECT ERROR: %s" % str(message)
 				continue
@@ -84,16 +84,17 @@ if __name__=="__main__":
 	client = Client(sys.argv[1], int(sys.argv[2]))
 	client.logger.setLevel(logging.DEBUG)
 	
-	client_ui = ClientInterface()
-	client.interface = client_ui
-	client_ui.start()
+	# Client output interface
+	client_output = ClientOutput()
+	client.interface = client_output
+	client.interface.start()
 	
 	listener = Listener(executioner=client, host=sys.argv[1], port=int(sys.argv[2]))
 
 	client.connect()
 	listener.start()
 	
-	# Take user input
+	# Client input interface
 	client_input = ClientInput(client)
 	client_input.start()
 	
@@ -103,5 +104,5 @@ if __name__=="__main__":
 	# Exit
 	client_input.stop()
 	listener.stop()
-	client_ui.stop()
+	client_output.stop()
 	print "Bye :)"

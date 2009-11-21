@@ -75,13 +75,15 @@ class Client(ActiveObject):
 	
 	
 	def send_message(self, destination, message):
+		# Create the message to send
 		msg = SendMessage(self.skt)
 		msg.clientSrc = self.__name
 		msg.clientDst = destination
 		msg.serverDst = self.server_name
 		msg.data = message
-		reply = msg.send()
 		
+		# Send the message
+		reply = msg.send()
 		if reply == None:
 			if self.interface != None:
 				self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
