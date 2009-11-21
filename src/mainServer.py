@@ -47,5 +47,6 @@ if __name__=="__main__":
 		time.sleep(1)
 	
 	# Exit
+	listener.stop()
 	print 'Bye :)'
 

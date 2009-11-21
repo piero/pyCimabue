@@ -38,10 +38,10 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("Processing SendMessage")
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
-		if msg.clientDst in self.clients.keys():
+		if msg.clientDst in self.clients:
 			# TODO: Send message to client
 			#client = self.__clients[msg.clientDst]
-			reply = SendMessage(msg.skt, msg.priority)			
+			reply = SendMessage(msg.skt, msg.priority)		
 		else:
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.data = "Destination not found: " + msg.clientDst

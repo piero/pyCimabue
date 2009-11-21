@@ -22,6 +22,7 @@ class Listener(threading.Thread):
 		self.__MAX_SIZE = 1024
 		self.__SELECT_TIMEOUT = 1.0
 		self.__RECV_TIMEOUT = 5.0
+		self.__running = False
 		self.__executioner = executioner
 		self.__executioner.set_listener(self)
 		
@@ -35,6 +36,10 @@ class Listener(threading.Thread):
 	
 	def get_host_and_port(self):
 		return (self.__HOST, self.__PORT)
+	
+	
+	def stop(self):
+		self.__running = False
 	
 	
 	def run(self):
@@ -57,10 +62,10 @@ class Listener(threading.Thread):
 			sys.exit(1)
 			
 		input = [listen_skt, sys.stdin]
-		running = True
+		self.__running = True
 
 		# The big loop
-		while running:
+		while self.__running:
 			try:
 				inputready, outputready, exceptready = select.select(input,
 																	[],
@@ -68,7 +73,7 @@ class Listener(threading.Thread):
 																	self.__SELECT_TIMEOUT)
 			except socket.error, (value, message):
 				print '[!] SOCKET ERROR:', str(message)
-				running = False
+				self.__running = False
 				
 			for skt in inputready:
 	
@@ -82,7 +87,7 @@ class Listener(threading.Thread):
 				elif skt == sys.stdin:
 					# Handle stdin: exit
 					sys.stdin.readline()
-					running = False
+					self.__running = False
 			
 				else:
 					# Handle a client socket

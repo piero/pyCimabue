@@ -34,7 +34,7 @@ class Message:
 		
 		if self.skt != None:
 			self.__use_external_socket = True
-			self.logger.debug("Message: Using external socket:" + str(self.skt.fileno()))
+			self.logger.debug("Message: Using external socket: " + str(self.skt.fileno()))
 		
 
 	def __str__(self):
@@ -95,7 +95,7 @@ class Message:
 
 		line = pickle.dumps(self.msg2dict())
 		self.skt.send(line)
-		self.logger.debug("[ ] Sent message: \"" + str(self) + "\"")
+		self.logger.debug("[ ] Sent: " + str(self))
 		
 		if self.__wait_for_reply:
 			# Receive reply
@@ -148,7 +148,7 @@ class Message:
 		self.logger.info("Message: Replying on socket " + str(skt.fileno()))
 		line = pickle.dumps(self.msg2dict())
 		skt.send(line)
-		self.logger.debug("[ ] Replied to message: \"" + str(self) + "\"")
+		self.logger.debug("[ ] Replied: " + str(self))
 
 
 # Subclasses (message types)

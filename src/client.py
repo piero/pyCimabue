@@ -14,6 +14,7 @@ class Client(ActiveObject):
 	def __init__(self, ip, port):
 		ActiveObject.__init__(self)
 		self.__name = str(int(time.time() * 1000))
+		self.skt = None
 		self.ip = ip
 		self.port = port
 		self.server_ip = None
@@ -36,22 +37,22 @@ class Client(ActiveObject):
 			self.output("[%d] Connecting to %s:%s..." % (i, output_list[i][0], output_list[i][1]))
 			
 			# Look for the Master Server
-			skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			try:
-				skt.connect((output_list[i][0], int(output_list[i][1])))
+				self.skt.connect((output_list[i][0], int(output_list[i][1])))
 			except socket.error:
-				if skt:	skt.close()
+				if self.skt: self.skt.close()
 				continue
 	
 			# Send 'Hello' message
-			msg = ConnectMessage(skt, priority=0)
+			msg = ConnectMessage(self.skt, priority=0)
 			msg.clientSrc = self.__name			# Our Name
 			msg.serverDst = self.ip				# Our IP address
 			msg.data = str(self.port)			# Our Port
 			reply = msg.send()
 			if reply != None:
 				connected = True				
-			if skt: skt.close()
+			#if self.skt: self.skt.close()
 
 			if reply.type == 'ErrorMessage':
 				self.output("Oops, wrong server!", logging.WARNING)
@@ -70,7 +71,17 @@ class Client(ActiveObject):
 		if connected == False:
 			self.output("No server found!", logging.CRITICAL)
 		else:
-			self.output("Connected to %s:%d..." % self.server_ip, self.server_port)
+			self.output("Connected to %s:%d (skt: %d)" % (self.server_ip, self.server_port, self.skt))
+	
+	
+	def send_message(self, destination, message):
+		msg = SendMessage(self.skt)
+		msg.clientSrc = self.__name
+		msg.clientDst = destination
+		msg.serverDst = self.server_name
+		msg.data = message
+		reply = msg.send()
+		return reply
 	
 	
 	def __process_request(self, msg):
