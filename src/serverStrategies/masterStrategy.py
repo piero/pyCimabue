@@ -39,15 +39,24 @@ class MasterStrategy(ServerStrategy):
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		if msg.clientDst in self.clients:
-			# TODO: Send message to client
-			#client = self.__clients[msg.clientDst]
-			reply = SendMessage(msg.skt, msg.priority)		
+			# Forward the message to the destination client
+			self.__server.output("Found %s (%s:%d)" % (msg.clientDst,
+													self.clients[msg.clientDst][0],
+													self.clients[msg.clientDst][1]))
+			reply = self.__forward_message(self.clients[msg.clientDst][0], self.clients[msg.clientDst][1], msg)
+			
+			#reply = Message(msg.skt, msg.priority)		
 		else:
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.data = "Destination not found: " + msg.clientDst
 		
 		reply.serverSrc = self.__server.get_name()
 		reply.clientDst = msg.clientSrc
+		
+		print ">>> RETURNING reply:", str(reply.data)
+		
+		# Use the same socket for the reply
+		reply.skt = msg.skt
 		return reply
 
 	
@@ -128,3 +137,20 @@ class MasterStrategy(ServerStrategy):
 		msg.clientDst = pickle.dumps(s_ip)
 		msg.data = pickle.dumps(s_port)
 		msg.send(self.backup[1], self.backup[2])
+
+
+	def __forward_message(self, dest_ip, dest_port, msg):
+		self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_ip, dest_port))
+		
+		fwd_msg = SendMessage()
+		fwd_msg.clientSrc = msg.clientSrc
+		fwd_msg.clientDst = msg.clientDst
+		fwd_msg.serverSrc = self.__server.get_name()
+		fwd_msg.data = msg.data
+
+		reply = fwd_msg.send(dest_ip, dest_port)
+		
+		if reply == None:
+			return fwd_msg
+		else:
+			return reply

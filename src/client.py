@@ -81,26 +81,49 @@ class Client(ActiveObject):
 		msg.serverDst = self.server_name
 		msg.data = message
 		reply = msg.send()
+		
+		if reply == None:
+			if self.interface != None:
+				self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
+		
 		return reply
 	
-	
-	def __process_request(self, msg):
-		if msg.type == SendMessage:
-			self.__process_sendMessage(msg)
-		elif msg.type == PingMessage:
-			self.__process_pingMessage(msg)
-		elif msg.type == ErrorMessage:
-			self.__process_errorMessage(msg)
+
+	def _process_request(self, msg, address):
+		# Dynamically call the proper function
+		try:
+			function_name = "_process_" + msg.type
+			reply = getattr(self, function_name)(msg)
+		
+		except AttributeError:
+			reply = ErrorMessage(msg.skt, msg.priority)
+			reply.serverSrc = self.__name
+			reply.clientDst = msg.clientSrc
+			reply.data = "Unknown message type: " + msg.type
+		
+		self._requests.task_done()
+
+		if msg.wait_for_reply():
+			reply.reply(reply.skt)
 	
 		
-	def __process_sendMessage(self, msg):
+	def _process_SendMessage(self, msg):
 		print 'Processing SendMessage'
+		
+		if self.interface != None:
+			self.interface.print_message("%s: %s" % (msg.clientSrc, msg.data))
+		
+		reply = Message(msg.skt, msg.priority)
+		reply.clientSrc = self.__name
+		reply.clientDst = msg.clientSrc
+		reply.serverDst = msg.serverSrc
+		return reply
 
 	
-	def __process_pingMessage(self, msg):
+	def _process_PingMessage(self, msg):
 		print 'Processing PingMessage'
 		
 	
-	def __process_errorMessage(self, msg):
+	def _process_errorMessage(self, msg):
 		print 'Processing ErrorMessage'
 	

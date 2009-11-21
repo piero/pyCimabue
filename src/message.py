@@ -84,6 +84,7 @@ class Message:
 			try:
 				self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				self.skt.connect((dstAddress, dstPort))
+				self.logger.debug("Message.send(): Connected to %s:%d (%d)" % (dstAddress, dstPort, self.skt.fileno()))
 	
 			except socket.error, (value, message):
 				if self.skt:
@@ -145,10 +146,13 @@ class Message:
 
 
 	def reply(self, skt):
-		self.logger.info("Message: Replying on socket " + str(skt.fileno()))
-		line = pickle.dumps(self.msg2dict())
-		skt.send(line)
-		self.logger.debug("[ ] Replied: " + str(self))
+		if skt:
+			self.logger.debug("Message: Replying on socket " + str(skt.fileno()))
+			line = pickle.dumps(self.msg2dict())
+			skt.send(line)
+			self.logger.debug("[ ] Replied: " + str(self))
+		else:
+			return None
 
 
 # Subclasses (message types)

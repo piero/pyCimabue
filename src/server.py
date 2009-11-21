@@ -87,11 +87,15 @@ class Server(ActiveObject):
 	
 
 	def _process_request(self, msg, address):
+		self.output("REQUEST: %s" % str(msg))
+		
 		# Dynamically call the proper function
 		try:
 			function_name = "_process_" + msg.type
 			reply = getattr(self.__strategy, function_name)(msg)
+		
 		except AttributeError:
+			self.output("AttributeError (%s.%s)" % (self.__strategy.name, function_name))
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.serverSrc = self.__name
 			reply.clientDst = msg.clientSrc

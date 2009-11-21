@@ -58,7 +58,7 @@ class Listener(threading.Thread):
 		except socket.error, (value, message):
 			if listen_skt:
 				listen_skt.close()
-			print 'Couldn\'t open socket: %s (%d)' % (str(message), value)
+			self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
 			sys.exit(1)
 			
 		input = [listen_skt, sys.stdin]
@@ -72,15 +72,15 @@ class Listener(threading.Thread):
 																 	[],
 																	self.__SELECT_TIMEOUT)
 			except socket.error, (value, message):
-				print '[!] SOCKET ERROR:', str(message)
-				self.__running = False
+				self.__logger.error("[!] SOCKET ERROR: %s" % str(message))
+				continue
 				
 			for skt in inputready:
 	
 				if skt == listen_skt:
 					# Handle server socket
 					new_skt, address = skt.accept()
-					#print 'New connection from', address
+					print '+++++ New connection from', address
 					new_skt.settimeout(self.__RECV_TIMEOUT)
 					input.append(new_skt)
 			
@@ -96,12 +96,12 @@ class Listener(threading.Thread):
 						
 					except socket.timeout, message:
 						if skt:
-							print 'Timeout: socket %d closed' % skt.fileno()
+							self.__logger.error("Timeout: socket %d closed" % skt.fileno())
 							skt.close()
 						continue
 						
 					except socket.error, (value, message):
-						print 'Socket Exception:', str(message)
+						self.__logger.error("Socket Exception: %s" % str(message))
 						if skt:
 							skt.close()
 						continue
@@ -121,6 +121,6 @@ class Listener(threading.Thread):
 		# Exit
 		listen_skt.close()
 		self.__executioner.kill()
-		print 'Joining executioner...'
+		self.__logger.debug("Joining executioner...")
 		self.__executioner.join(10.0)
-		print '[x] %s' % self.__class__.__name__
+		self.__logger.info("[x] %s" % self.__class__.__name__)

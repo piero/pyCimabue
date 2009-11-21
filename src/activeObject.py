@@ -63,5 +63,3 @@ class ActiveObject(threading.Thread):
 
 	def output(self, msg, level=logging.DEBUG):
 		self.logger.log(level, msg)
-		if self.interface != None:
-			self.interface.output(msg, level)
