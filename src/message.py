@@ -84,7 +84,6 @@ class Message:
 			try:
 				self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				self.skt.connect((dstAddress, dstPort))
-				self.logger.debug("Message.send(): Connected to %s:%d (%d)" % (dstAddress, dstPort, self.skt.fileno()))
 	
 			except socket.error, (value, message):
 				if self.skt:

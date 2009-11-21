@@ -28,6 +28,13 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("[+] Added client %s (%s:%d)" % (msg.clientSrc,
 															self.clients[msg.clientSrc][0],
 															self.clients[msg.clientSrc][1]))
+		
+		# Notify all the other connected clients
+		
+		
+		# Notify the Backup Server (if any)
+		
+		
 		reply = Message(msg.skt, msg.priority)
 		reply.clientDst = msg.clientSrc
 		reply.serverSrc = self.__server.get_name()
@@ -40,12 +47,8 @@ class MasterStrategy(ServerStrategy):
 		
 		if msg.clientDst in self.clients:
 			# Forward the message to the destination client
-			self.__server.output("Found %s (%s:%d)" % (msg.clientDst,
-													self.clients[msg.clientDst][0],
-													self.clients[msg.clientDst][1]))
-			reply = self.__forward_message(self.clients[msg.clientDst][0], self.clients[msg.clientDst][1], msg)
+			reply = self.__forward_message(self.clients[msg.clientDst], msg)
 			
-			#reply = Message(msg.skt, msg.priority)		
 		else:
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.data = "Destination not found: " + msg.clientDst
@@ -139,8 +142,8 @@ class MasterStrategy(ServerStrategy):
 		msg.send(self.backup[1], self.backup[2])
 
 
-	def __forward_message(self, dest_ip, dest_port, msg):
-		self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_ip, dest_port))
+	def __forward_message(self, dest_client, msg):
+		self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_client[0], dest_client[1]))
 		
 		fwd_msg = SendMessage()
 		fwd_msg.clientSrc = msg.clientSrc
@@ -148,9 +151,13 @@ class MasterStrategy(ServerStrategy):
 		fwd_msg.serverSrc = self.__server.get_name()
 		fwd_msg.data = msg.data
 
-		reply = fwd_msg.send(dest_ip, dest_port)
+		reply = fwd_msg.send(dest_client[0], dest_client[1])
 		
 		if reply == None:
 			return fwd_msg
 		else:
 			return reply
+
+
+	def __notify_about_new_client(self, client):
+		pass
