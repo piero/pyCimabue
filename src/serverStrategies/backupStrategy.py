@@ -18,7 +18,7 @@ class BackupStrategy(ServerStrategy):
 		self.__server.output("Behaviour: %s" % self.name)
 		if self.__master != None:
 			self.__server.output("(master: %s)" % self.__master[0])
-
+			
 
 	def get_master(self):
 		return self.__master
@@ -45,6 +45,7 @@ class BackupStrategy(ServerStrategy):
 			
 			# If successful, we can break the loop
 			if reply != None and reply.type != ErrorMessage:
+				del self.__servers[candidate[0]]	# Remove the new Master from the Servers list
 				self.__master = candidate
 				self.__server.output("New Master is %s (%s:%d)" % (self.__master[0],
 														self.__master[1][0],
@@ -53,11 +54,8 @@ class BackupStrategy(ServerStrategy):
 				break
 			else:
 				self.__server.output("Candidate %s is down" % candidate[0])
-				
-			# In any case, remove the server from our list
-			if len(self.__servers) > 0:
-				del self.__servers[candidate[0]]
-						
+				del self.__servers[candidate[0]]	# Remove the new Master from the Servers list
+		
 		# If the list is empty, we become the new Master
 		if len(self.__servers) == 0 and self.__master == None:
 			self.__server.output("No more candidates: I am the Master", logging.INFO)

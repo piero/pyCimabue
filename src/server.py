@@ -100,6 +100,7 @@ class Server(ActiveObject):
 			reply.serverSrc = self.__name
 			reply.clientDst = msg.clientSrc
 			reply.data = "Unknown message type: " + msg.type
+			self._requests.task_done()
 		
 		reply = process_function(msg)
 		self._requests.task_done()

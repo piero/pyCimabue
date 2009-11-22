@@ -29,19 +29,22 @@ class PingAgent(threading.Thread):
 				#self.__run_as_master()
 				for k in self.__caller.get_role().servers_ping.keys():
 					if (time.time() - self.__caller.get_role().servers_ping[k] > 5):
-						del self.__caller.get_role().servers_ping[k]
+						#del self.__caller.get_role().servers_ping[k]
 						
 						if k != self.__caller.get_role().backup[0]:
 							del self.__caller.get_role().servers[k]
 							self.__caller.output("Removed %s (%d servers left)" % (k, len(self.__caller.get_role().servers)),
 												logging.WARNING)
 							self.__caller.get_role().sync_server_list()
+						
 						else:
 							del self.__caller.get_role().backup
 							self.__caller.get_role().backup = None
 							self.__caller.output("Backup left (%s)!" % k,
 												logging.WARNING)
 							# TODO: Start Backup rescue procedure!
+						
+						del self.__caller.get_role().servers_ping[k]
 			else:
 				#self.__run_as_slave()
 				master = self.__caller.get_role().get_master()

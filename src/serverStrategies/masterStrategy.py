@@ -15,6 +15,7 @@ class MasterStrategy(ServerStrategy):
 		self.clients = {}			# List of Clients
 		self.servers = {}			# List of Servers: (name, (ip, port))
 		self.servers_ping = {}		# Servers ping timestamps (name, last_ping_ts)
+		self.clients_ping = {}		# Clients ping timestamps (name, last_ping_ts)
 		self.backup = backup
 		
 		self.__server.output("Behaviour: %s" % self.name)
@@ -28,13 +29,13 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("[+] Added client %s (%s:%d)" % (msg.clientSrc,
 															self.clients[msg.clientSrc][0],
 															self.clients[msg.clientSrc][1]))
+				
+		c_names = self.sync_client_list(msg.clientSrc)
 		
-		# Notify all the other connected clients and the Backup Server (if any)
-		self.__update_client_list(msg.clientSrc)
-		
-		reply = Message(msg.skt, msg.priority)
+		reply = SyncClientListMessage(msg.skt, msg.priority)
 		reply.clientDst = msg.clientSrc
 		reply.serverSrc = self.__server.get_name()
+		reply.data = pickle.dumps(c_names)
 		return reply
 	
 	
@@ -61,19 +62,36 @@ class MasterStrategy(ServerStrategy):
 	def _process_PingMessage(self, msg):
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
-		if msg.serverSrc != self.backup[0] and self.servers.get(msg.serverSrc) == None:
-			self.__server.output("Received Ping from unknown %s" % msg.serverSrc)
-			return ErrorMessage(msg.skt)
+		# Process Ping messages from other servers
+		if msg.serverSrc != None:
+			if self.backup != None and msg.serverSrc != self.backup[0] and msg.serverSrc not in self.servers:
+				self.__server.output("Received Ping from unknown server %s" % msg.serverSrc)
+				return ErrorMessage(msg.skt)
 		
-		# Update ping list
-		self.servers_ping[msg.serverSrc] = time.time()
-		#print "Updated: %s: %d" % (msg.serverSrc, self.servers_ping[msg.serverSrc])
+			# Update ping list
+			self.servers_ping[msg.serverSrc] = time.time()
+				
+			reply = PingMessage(msg.skt, msg.priority)
+			reply.serverSrc = self.__server.get_name()
+			reply.serverDst = msg.serverSrc
+			return reply
+		
+		# Process Ping messages from clients
+		elif msg.clientSrc != None:
+			if msg.clientSrc not in self.clients:
+				self.__server.output("Received Ping from unknown client %s" % msg.clientSrc)
+				return ErrorMessage(msg.skt)
 			
-		reply = PingMessage(msg.skt, msg.priority)
-		reply.serverSrc = self.__server.get_name()
-		reply.clientDst = msg.clientSrc
-		return reply
+			# Update ping list
+			self.clients_ping[msg.clientSrc] = time.time()
+			
+			reply = PingMessage(msg.skt, msg.priority)
+			reply.serverSrc = self.__server.get_name()
+			reply.clientDst = msg.clientSrc
+			return reply
 		
+		else: return ErrorMessage(msg.skt)
+	
 	
 	def _process_ErrorMessage(self, msg):
 		self.__server.output("Processing ErrorMessage")
@@ -107,7 +125,9 @@ class MasterStrategy(ServerStrategy):
 															s[0],
 															s[1],
 															self.servers_ping[msg.serverSrc]))
-			self.sync_server_list()	
+			# Update Backup Server
+			update_msg = self.sync_server_list()
+			update_msg.send(self.backup[1], self.backup[2])
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
@@ -134,8 +154,50 @@ class MasterStrategy(ServerStrategy):
 		msg.clientSrc = pickle.dumps(s_names)
 		msg.clientDst = pickle.dumps(s_ip)
 		msg.data = pickle.dumps(s_port)
-		msg.send(self.backup[1], self.backup[2])
-
+		return msg
+	
+	
+	def sync_client_list(self, client=None):
+		c_names = []
+		c_ip = []
+		c_port = []
+		
+		for c in self.clients:
+			c_names.append(c)
+			c_ip.append(self.clients[c][0])
+			c_port.append(self.clients[c][1])
+		
+		if client != None:
+			# Notify the other clients
+			client_update = SyncClientListMessage(priority=0)
+			client_update.serverSrc = self.__server.get_name()
+			client_update.data = pickle.dumps(c_names)
+			
+			for c in self.clients:
+				if c != client:
+					self.__server.output("[i] Updating clients on %s..." % c)
+					client_update.clientDst = c
+					
+					reply = client_update.send(self.clients[c][0], self.clients[c][1])
+					if reply == None or reply.type == ErrorMessage:
+						self.__server.output("[!] Error synchronizing client list on %s" % c)
+	
+		# Notify the Backup Server
+		if self.backup != None:
+			self.__server.output("[i] Updating clients on Backup Server %s..." % self.backup[0])
+			backup_update = SyncClientListMessage(priority=0)
+			backup_update.serverSrc = self.__server.get_name()
+			backup_update.serverDst = self.backup[0]
+			backup_update.clientSrc = pickle.dumps(c_ip)
+			backup_update.clientDst = pickle.dumps(c_port)
+			backup_update.data = pickle.dumps(c_names)
+		
+			reply = backup_update.send(self.backup[1], self.backup[2])
+			if reply == None or reply.type == ErrorMessage:
+				self.__server.output("[!] Error synchronizing client list on Backup Server")
+		
+		return c_names
+	
 
 	def __forward_message(self, dest_client, msg):
 		self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_client[0], dest_client[1]))
@@ -152,44 +214,4 @@ class MasterStrategy(ServerStrategy):
 			return fwd_msg
 		else:
 			return reply
-
-
-	def __update_client_list(self, client):
-		c_names = []
-		c_ip = []
-		c_port = []
-		
-		for c in self.clients:
-			c_names.append(c)
-			c_ip.append(self.clients[c][0])
-			c_port.append(self.clients[c][1])
-		
-		# Notify the other clients
-		client_update = SyncClientListMessage(priority=0)
-		client_update.serverSrc = self.__server.get_name()
-		client_update.data = pickle.dumps(c_names)
-		
-		for c in self.clients:
-			if c != client:
-				self.__server.output("[i] Updating clients on %s..." % c)
-				client_update.clientDst = c
-				
-				reply = client_update.send(self.clients[c][0], self.clients[c][1])
-				if reply == None or reply.type == ErrorMessage:
-					self.__server.output("[!] Error synchronizing client list on %s" % c)
 	
-		# Notify the Backup Server
-		if self.backup != None:
-			self.__server.output("[i] Updating clients on Backup Server %s..." % self.backup[0])
-			backup_update = SyncClientListMessage(priority=0)
-			backup_update.serverSrc = self.__server.get_name()
-			backup_update.serverDst = self.backup[0]
-			backup_update.clientSrc = pickle.dumps(c_ip)
-			backup_update.clientDst = pickle.dumps(c_port)
-			backup_update.data = pickle.dumps(c_names)
-		
-			reply = backup_update.send(self.backup[1], self.backup[2])
-			if reply == None or reply.type == ErrorMessage:
-				self.__server.output("[!] Error synchronizing client list on Backup Server")
-		
-		

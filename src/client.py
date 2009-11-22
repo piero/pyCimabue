@@ -51,28 +51,32 @@ class Client(ActiveObject):
 			msg.serverDst = self.ip				# Our IP address
 			msg.data = str(self.port)			# Our Port
 			reply = msg.send()
+			
 			if reply != None:
 				connected = True				
-			#if self.skt: self.skt.close()
+				if self.skt: self.skt.close()
 
-			if reply.type == 'ErrorMessage':
-				self.output("Oops, wrong server!", logging.WARNING)
-				continue	# Oops, it wasn't the Master Server
+				if reply.type != "SyncClientListMessage":
+					self.output("Oops, wrong server!", logging.WARNING)
+					continue	# Oops, it wasn't the Master Server
+				
+				else:
+					self.server_ip = output_list[i][0]
+					self.server_port = int(output_list[i][1])
+					self.server_name = reply.serverSrc
+					
+					# Update clients list
+					if reply.data != None:
+						c_names = pickle.loads(reply.data)
+						self.__update_client_list(c_names)
 			
-			else:
-				self.server_ip = output_list[i][0]
-				self.server_port = int(output_list[i][1])
-				self.server_name = reply.serverSrc
-				self.output("Connected to %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port))
-			
-			# We're done
-			return
-		
-		# We're the Master Server
-		if connected == False:
+				# We're done
+				break
+
+		if not connected:
 			self.output("No server found!", logging.CRITICAL)
 		else:
-			self.output("Connected to %s:%d (skt: %d)" % (self.server_ip, self.server_port, self.skt))
+			self.output("Connected to %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port))
 	
 	
 	def send_message(self, destination, message):
@@ -136,21 +140,24 @@ class Client(ActiveObject):
 		self.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
 		c_names = pickle.loads(msg.data)
 		
+		self.__update_client_list(c_names)
+		
+		reply = Message(msg.skt, msg.priority)
+		reply.clientSrc = self.__name
+		reply.serverDst = msg.serverSrc
+		return reply
+	
+	
+	def __update_client_list(self, client_list):
 		# Clear the clients list
 		while len(self.__clients):
 			self.__clients.pop()
 		
-		for i in c_names:
+		for i in client_list:
 			if i != self.__name:
-				self.output("%s != %s --> Adding" % (i, self.__name))
 				self.__clients.append(i)
 		
 		# Print Client list (debug)
 		self.output("CLIENT LIST")
 		for c in self.__clients:
 			self.output("%s" % c)
-		
-		reply = Message(msg.skt, msg.priority)
-		reply.clientSrc = self.__name
-		reply.serverDst = msg.serverSrc
-		return reply
