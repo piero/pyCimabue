@@ -21,6 +21,7 @@ class Client(ActiveObject):
 		self.server_port = None
 		self.server_name = None
 		self.__listener = None
+		self.__clients = []
 		self.output(("CLIENT %s" % self.__name), logging.INFO)
 	
 	
@@ -34,7 +35,7 @@ class Client(ActiveObject):
 		connected = False
 		
 		for i in range(len(output_list)):
-			self.output("[%d] Connecting to %s:%s..." % (i, output_list[i][0], output_list[i][1]))
+			self.output("Connecting to %s:%s..." % (output_list[i][0], output_list[i][1]))
 			
 			# Look for the Master Server
 			self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -94,8 +95,8 @@ class Client(ActiveObject):
 	def _process_request(self, msg, address):
 		# Dynamically call the proper function
 		try:
-			function_name = "_process_" + msg.type
-			reply = getattr(self, function_name)(msg)
+			process_function_name = "_process_" + msg.type
+			process_function = getattr(self, process_function_name)
 		
 		except AttributeError:
 			reply = ErrorMessage(msg.skt, msg.priority)
@@ -103,6 +104,7 @@ class Client(ActiveObject):
 			reply.clientDst = msg.clientSrc
 			reply.data = "Unknown message type: " + msg.type
 		
+		reply = process_function(msg)
 		self._requests.task_done()
 
 		if msg.wait_for_reply():
@@ -129,3 +131,26 @@ class Client(ActiveObject):
 	def _process_errorMessage(self, msg):
 		print 'Processing ErrorMessage'
 	
+	
+	def _process_SyncClientListMessage(self, msg):
+		self.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
+		c_names = pickle.loads(msg.data)
+		
+		# Clear the clients list
+		while len(self.__clients):
+			self.__clients.pop()
+		
+		for i in c_names:
+			if i != self.__name:
+				self.output("%s != %s --> Adding" % (i, self.__name))
+				self.__clients.append(i)
+		
+		# Print Client list (debug)
+		self.output("CLIENT LIST")
+		for c in self.__clients:
+			self.output("%s" % c)
+		
+		reply = Message(msg.skt, msg.priority)
+		reply.clientSrc = self.__name
+		reply.serverDst = msg.serverSrc
+		return reply

@@ -87,20 +87,21 @@ class Server(ActiveObject):
 	
 
 	def _process_request(self, msg, address):
-		self.output("REQUEST: %s" % str(msg))
+		#self.output("REQUEST: %s" % str(msg))
 		
 		# Dynamically call the proper function
 		try:
-			function_name = "_process_" + msg.type
-			reply = getattr(self.__strategy, function_name)(msg)
+			process_function_name = "_process_" + msg.type
+			process_function = getattr(self.__strategy, process_function_name)
 		
 		except AttributeError:
-			self.output("AttributeError (%s.%s)" % (self.__strategy.name, function_name))
+			self.output("AttributeError (%s.%s)" % (self.__strategy.name, process_function_name), logging.ERROR)
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.serverSrc = self.__name
 			reply.clientDst = msg.clientSrc
 			reply.data = "Unknown message type: " + msg.type
 		
+		reply = process_function(msg)
 		self._requests.task_done()
 
 		if msg.wait_for_reply():
@@ -126,7 +127,7 @@ class Server(ActiveObject):
 			if output_list[i][0] == host_and_port[0] and int(output_list[i][1]) == host_and_port[1]:
 				continue
 			
-			self.output("[%d] Trying %s:%s..." % (i, output_list[i][0], output_list[i][1]))
+			self.output("Trying %s:%s..." % (output_list[i][0], output_list[i][1]))
 			
 			# Look for the Master Server
 			skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -143,16 +144,16 @@ class Server(ActiveObject):
 			msg.clientDst = str(self.port)			# Our Port
 			reply = msg.send()
 			if reply != None:
-				connected = True				
+				connected = True	
 			if skt: skt.close()
 
 			if reply.type == 'ErrorMessage':
 				continue	# Oops, it wasn't the Master Server
 			
-			elif reply.type == 'WelcomeBackup':
+			elif reply.type == 'WelcomeBackupMessage':
 				self.set_role(Server.BACKUP, (reply.data, (reply.clientSrc, int(reply.clientDst))))
 			
-			elif reply.type == 'WelcomeIdle':
+			elif reply.type == 'WelcomeIdleMessage':
 				self.set_role(Server.IDLE, (reply.data, (reply.clientSrc, int(reply.clientDst))))
 			
 			else:

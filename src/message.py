@@ -34,7 +34,7 @@ class Message:
 		
 		if self.skt != None:
 			self.__use_external_socket = True
-			self.logger.debug("Message: Using external socket: " + str(self.skt.fileno()))
+			self.logger.debug("[%s] Using external socket: %d" % (self.type, self.skt.fileno()))
 		
 
 	def __str__(self):
@@ -95,7 +95,7 @@ class Message:
 
 		line = pickle.dumps(self.msg2dict())
 		self.skt.send(line)
-		self.logger.debug("[ ] Sent: " + str(self))
+		#self.logger.debug("[ ] Sent: " + str(self))
 		
 		if self.__wait_for_reply:
 			# Receive reply
@@ -146,10 +146,10 @@ class Message:
 
 	def reply(self, skt):
 		if skt:
-			self.logger.debug("Message: Replying on socket " + str(skt.fileno()))
+			self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
 			line = pickle.dumps(self.msg2dict())
 			skt.send(line)
-			self.logger.debug("[ ] Replied: " + str(self))
+			#self.logger.debug("[ ] Replied: " + str(self))
 		else:
 			return None
 
@@ -175,17 +175,17 @@ class ErrorMessage(Message):
 class HelloMessage(Message):
 	pass
 
-class WelcomeBackup(Message):
+class WelcomeBackupMessage(Message):
 	pass
 
-class WelcomeIdle(Message):
+class WelcomeIdleMessage(Message):
 	pass
 
 # Server synchronization
-class SyncServerList(Message):
+class SyncServerListMessage(Message):
 	pass
 
-class SyncClientList(Message):
+class SyncClientListMessage(Message):
 	pass
 
 # Server update

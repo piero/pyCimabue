@@ -80,7 +80,7 @@ class Listener(threading.Thread):
 				if skt == listen_skt:
 					# Handle server socket
 					new_skt, address = skt.accept()
-					print '+++++ New connection from', address
+					#print '+++++ New connection from', address
 					new_skt.settimeout(self.__RECV_TIMEOUT)
 					input.append(new_skt)
 			

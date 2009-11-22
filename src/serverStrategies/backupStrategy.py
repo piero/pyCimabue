@@ -62,16 +62,17 @@ class BackupStrategy(ServerStrategy):
 		if len(self.__servers) == 0 and self.__master == None:
 			self.__server.output("No more candidates: I am the Master", logging.INFO)
 			
-			# TODO: Notify connected Clients
-			
-			# Become Master
+			# 1) Become Master
 			self.__server.set_role(self.__server.MASTER)
-		
-		else:
+			
 			# 2) Notify connected Clients
 			# TODO
 		
-			# 3) Notify Idle Servers
+		else:
+			# 3) Notify connected Clients
+			# TODO
+		
+			# 4) Notify Idle Servers
 			self.__notify_servers()
 	
 	
@@ -145,8 +146,8 @@ class BackupStrategy(ServerStrategy):
 		return reply
 	
 	
-	def _process_SyncServerList(self, msg):
-		self.output(("Received ServerList from %s" % msg.serverSrc), logging.INFO)
+	def _process_SyncServerListMessage(self, msg):
+		self.__server.output(("Received ServerList from %s" % msg.serverSrc), logging.INFO)
 		s_name = pickle.loads(msg.clientSrc)
 		s_ip = pickle.loads(msg.clientDst)
 		s_port = pickle.loads(msg.data)
@@ -156,21 +157,34 @@ class BackupStrategy(ServerStrategy):
 		for i in range(len(s_name)):
 			self.__servers[s_name[i]] = (s_ip[i], int(s_port[i]))
 		
-		# Print Server List (debug)
-		self.output("SERVER LIST")
-		for s in self.__servers.keys():
-			self.__server.output("[%s] %s:%d" % (s, self.__servers[s][0], self.__servers[s][1]))
+		# Print Server list (debug)
+		self.__server.output("SERVER LIST")
+		for s in self.__servers:
+			self.__server.output("%s (%s:%d)" % (s, self.__servers[s][0], self.__servers[s][1]))
 
-		reply = SyncServerList(msg.skt, msg.priority)
+		reply = SyncServerListMessage(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()
 		reply.serverDst = msg.serverSrc
 		return reply
 
 
-	def _process_SyncClientList(self, msg):
-		# TODO
-		reply = ErrorMessage(msg.skt, msg.priority)
+	def _process_SyncClientListMessage(self, msg):
+		self.__server.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
+		c_name = pickle.loads(msg.data)
+		c_ip = pickle.loads(msg.clientSrc)
+		c_port = pickle.loads(msg.clientDst)
+		
+		self.__clients.clear()
+		
+		for i in range(len(c_name)):
+			self.__clients[c_name[i]] = (c_ip[i], int(c_port[i]))
+		
+		# Print Client list (debug)
+		self.__server.output("CLIENT LIST")
+		for c in self.__clients:
+			self.__server.output("%s (%s:%d)" % (c, self.__clients[c][0], self.__clients[c][1]))
+		
+		reply = Message(msg.skt, msg.priority)
 		reply.serverSrc = self.__server.get_name()
-		reply.clientDst = msg.clientSrc
-		reply.data = "Unknown message type: " + msg.type
+		reply.serverDst = msg.serverSrc
 		return reply
