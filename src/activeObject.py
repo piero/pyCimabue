@@ -57,7 +57,7 @@ class ActiveObject(threading.Thread):
 		self.output("[x] %s" % self.__class__.__name__)
 
 
-	def kill(self):
+	def stop(self):
 		self._running = False
 		
 

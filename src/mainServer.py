@@ -49,4 +49,4 @@ if __name__=="__main__":
 	# Exit
 	listener.stop()
 	print 'Bye :)'
-
+	sys.exit()

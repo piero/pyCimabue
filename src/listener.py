@@ -120,7 +120,7 @@ class Listener(threading.Thread):
 
 		# Exit
 		listen_skt.close()
-		self.__executioner.kill()
+		self.__executioner.stop()
 		self.__logger.debug("Joining executioner...")
-		self.__executioner.join(10.0)
+		self.__executioner.join(2.0)
 		self.__logger.info("[x] %s" % self.__class__.__name__)

@@ -28,7 +28,7 @@ class Server(ActiveObject):
 		self.output(("SERVER %s" % self.__name), logging.INFO)
 	
 	
-	def kill(self):
+	def stop(self):
 		self._running = False
 		self._kill_dependancies()
 			
@@ -40,8 +40,8 @@ class Server(ActiveObject):
 		
 		if self.__ping_agent != None and self.__ping_agent.is_alive():
 			self.output("[x] Killing Ping Agent...")
-			self.__ping_agent.kill()
-			self.__ping_agent.join()
+			self.__ping_agent.stop()
+			self.__ping_agent.join(1.0)
 			self.__ping_agent = None
 	
 	
@@ -63,18 +63,9 @@ class Server(ActiveObject):
 			self.output(("[!] ROLE \"%s\" DOESN'T MAP ANY CLASS!!!\n" % role), logging.CRITICAL)
 			return
 		
-		if (self.__strategy.__class__.__name__ != Server.MASTER):
-			if self.__ping_agent == None:
-				self.__ping_agent = PingAgent(caller=self, as_master=False)
-			else:
-				self.__ping_agent.is_master = False
-		else:
-			if self.__ping_agent == None:
-				self.__ping_agent = PingAgent(caller=self, as_master=True)
-			else:
-				self.__ping_agent.is_master = True
-		
-		if self.__ping_agent.isAlive() == False:
+		# Start the Ping Agent
+		self.__ping_agent = PingAgent(caller=self, run_as_server=True)
+		if not self.__ping_agent.isAlive():
 			self.__ping_agent.start()
 		
 	
