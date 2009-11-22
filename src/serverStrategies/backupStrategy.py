@@ -157,7 +157,7 @@ class BackupStrategy(ServerStrategy):
 		
 		# Print Server list (debug)
 		self.__server.output("SERVER LIST")
-		for s in self.__servers:
+		for s in self.__servers.keys():
 			self.__server.output("%s (%s:%d)" % (s, self.__servers[s][0], self.__servers[s][1]))
 
 		reply = SyncServerListMessage(msg.skt, msg.priority)
@@ -179,7 +179,7 @@ class BackupStrategy(ServerStrategy):
 		
 		# Print Client list (debug)
 		self.__server.output("CLIENT LIST")
-		for c in self.__clients:
+		for c in self.__clients.keys():
 			self.__server.output("%s (%s:%d)" % (c, self.__clients[c][0], self.__clients[c][1]))
 		
 		reply = Message(msg.skt, msg.priority)

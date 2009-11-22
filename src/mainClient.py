@@ -106,3 +106,4 @@ if __name__=="__main__":
 	listener.stop()
 	client_output.stop()
 	print "Bye :)"
+	sys.exit()

@@ -43,7 +43,7 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("Processing SendMessage")
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
-		if msg.clientDst in self.clients:
+		if msg.clientDst in self.clients.keys():
 			# Forward the message to the destination client
 			reply = self.__forward_message(self.clients[msg.clientDst], msg)
 			
@@ -64,7 +64,7 @@ class MasterStrategy(ServerStrategy):
 		
 		# Process Ping messages from other servers
 		if msg.serverSrc != None:
-			if self.backup != None and msg.serverSrc != self.backup[0] and msg.serverSrc not in self.servers:
+			if self.backup != None and msg.serverSrc != self.backup[0] and msg.serverSrc not in self.servers.keys():
 				self.__server.output("Received Ping from unknown server %s" % msg.serverSrc)
 				return ErrorMessage(msg.skt)
 		
@@ -78,7 +78,7 @@ class MasterStrategy(ServerStrategy):
 		
 		# Process Ping messages from clients
 		elif msg.clientSrc != None:
-			if msg.clientSrc not in self.clients:
+			if msg.clientSrc not in self.clients.keys():
 				self.__server.output("Received Ping from unknown client %s" % msg.clientSrc)
 				return ErrorMessage(msg.skt)
 			
@@ -146,7 +146,7 @@ class MasterStrategy(ServerStrategy):
 		s_ip = []
 		s_port = []
 		
-		for s in self.servers:
+		for s in self.servers.keys():
 			s_names.append(s)
 			s_ip.append(self.servers[s][0])
 			s_port.append(self.servers[s][1])
@@ -162,7 +162,7 @@ class MasterStrategy(ServerStrategy):
 		c_ip = []
 		c_port = []
 		
-		for c in self.clients:
+		for c in self.clients.keys():
 			c_names.append(c)
 			c_ip.append(self.clients[c][0])
 			c_port.append(self.clients[c][1])
@@ -173,7 +173,7 @@ class MasterStrategy(ServerStrategy):
 			client_update.serverSrc = self.__server.get_name()
 			client_update.data = pickle.dumps(c_names)
 			
-			for c in self.clients:
+			for c in self.clients.keys():
 				if c != client:
 					self.__server.output("[i] Updating clients on %s..." % c)
 					client_update.clientDst = c
