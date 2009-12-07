@@ -113,6 +113,6 @@ class PingAgent(threading.Thread):
 		msg.serverDst = self.__caller.server_name
 		reply = msg.send(self.__caller.server_ip, self.__caller.server_port)
 		
-		if reply == None or reply.type == 'ErrorMessage':
+		if reply != None and reply.type == 'ErrorMessage':
 			self.__caller.output(("Master %s doesn't know me" % self.__caller.server_name), logging.WARNING)
 			self.__caller.connect_to_server(self.__caller.server_ip, self.__caller.server_port)

@@ -107,7 +107,7 @@ class Message:
 			except socket.timeout, message:
 				if self.skt:
 					self.skt.close()
-				self.logger.error("[!] Message.send(): " + str(message))
+				self.logger.error("[!] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
@@ -115,7 +115,7 @@ class Message:
 			except socket.error, (value, message):
 				if self.skt:
 					self.skt.close()
-				self.logger.error("[!] Message.send(): " + str(message))
+				self.logger.error("[!] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
