@@ -131,8 +131,7 @@ class MasterStrategy(ServerStrategy):
 
 		reply.clientSrc = self.__server.ip				# Master IP address
 		reply.clientDst = str(self.__server.port)		# Master Port
-		reply.data = self.__server.get_name()			# Master Name
-		reply.serverSrc = self.__server.get_name()
+		reply.serverSrc = self.__server.get_name()		# Master Name
 		reply.serverDst = msg.serverSrc
 		return reply
 	

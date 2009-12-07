@@ -143,10 +143,10 @@ class Server(ActiveObject):
 				continue	# Oops, it wasn't the Master Server
 			
 			elif reply.type == 'WelcomeBackupMessage':
-				self.set_role(Server.BACKUP, (reply.data, (reply.clientSrc, int(reply.clientDst))))
+				self.set_role(Server.BACKUP, (reply.serverSrc, (reply.clientSrc, int(reply.clientDst))))
 			
 			elif reply.type == 'WelcomeIdleMessage':
-				self.set_role(Server.IDLE, (reply.data, (reply.clientSrc, int(reply.clientDst))))
+				self.set_role(Server.IDLE, (reply.serverSrc, (reply.clientSrc, int(reply.clientDst))))
 			
 			else:
 				self.output(("UNKNOWN ROLE: %s" % reply.type), logging.ERROR)
