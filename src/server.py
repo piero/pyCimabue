@@ -130,7 +130,7 @@ class Server(ActiveObject):
 				continue
 	
 			# Send 'Hello' message
-			msg = HelloMessage(skt, priority=0)
+			msg = HelloMessage(skt, priority=1)
 			msg.serverSrc = self.__name				# Our Name
 			msg.clientSrc = self.ip					# Our IP address
 			msg.clientDst = str(self.port)			# Our Port
