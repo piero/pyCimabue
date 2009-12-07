@@ -34,7 +34,7 @@ class Message:
 		
 		if self.skt != None:
 			self.__use_external_socket = True
-			self.logger.debug("[%s] Using external socket: %d" % (self.type, self.skt.fileno()))
+			#self.logger.debug("[%s] Using external socket: %d" % (self.type, self.skt.fileno()))
 		
 
 	def __str__(self):
@@ -88,7 +88,7 @@ class Message:
 			except socket.error, (value, message):
 				if self.skt:
 					self.skt.close()
-				self.logger.error("[!] Message.send(): Socket error: " + str(message))
+				self.logger.error("[!] Message.send(%s:%d): Socket error: %s" % (dstAddress, dstPort, str(message)))
 				self.type = ErrorMessage
 				self.data = str(message)
 				return None
@@ -146,7 +146,7 @@ class Message:
 
 	def reply(self, skt):
 		if skt:
-			self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
+			#self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
 			line = pickle.dumps(self.msg2dict())
 			skt.send(line)
 			#self.logger.debug("[ ] Replied: " + str(self))

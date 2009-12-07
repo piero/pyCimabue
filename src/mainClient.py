@@ -91,8 +91,8 @@ if __name__=="__main__":
 	
 	listener = Listener(executioner=client, host=sys.argv[1], port=int(sys.argv[2]))
 
-	client.connect()
 	listener.start()
+	client.connect()
 	
 	# Client input interface
 	client_input = ClientInput(client)

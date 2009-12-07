@@ -68,12 +68,19 @@ class PingAgent(threading.Thread):
 					# TODO: Start Backup rescue procedure!
 				
 		# Check clients
+		self.__caller.get_role().clients_lock.acquire()
 		for k in self.__caller.get_role().clients_ping.keys():
 			if (time.time() - self.__caller.get_role().clients_ping[k] > self.__CLIENT_TIMEOUT):
 				del self.__caller.get_role().clients_ping[k]
 				del self.__caller.get_role().clients[k]
-				self.__caller.output("Removed %c (%d clients left)" % (k, len(self.__caller.get_role().clients)),
+				self.__caller.output("Removed %s (%d clients left)" % (k, len(self.__caller.get_role().clients)),
 										logging.WARNING)
+				
+				self.__caller.get_role().clients_lock.release()
+				self.__caller.get_role().sync_client_list()
+				self.__caller.get_role().clients_lock.acquire()
+				
+		self.__caller.get_role().clients_lock.release()
 
 	
 	def __run_as_slave(self):
@@ -106,6 +113,6 @@ class PingAgent(threading.Thread):
 		msg.serverDst = self.__caller.server_name
 		reply = msg.send(self.__caller.server_ip, self.__caller.server_port)
 		
-		if reply.type == "ErrorMessage":
+		if reply == None or reply.type == 'ErrorMessage':
 			self.__caller.output(("Master %s doesn't know me" % self.__caller.server_name), logging.WARNING)
 			self.__caller.connect_to_server(self.__caller.server_ip, self.__caller.server_port)

@@ -124,7 +124,7 @@ class Client(ActiveObject):
 		
 		self.__update_client_list(c_names)
 		
-		reply = Message(msg.skt, msg.priority)
+		reply = SyncClientListMessage(msg.skt, msg.priority)
 		reply.clientSrc = self.__name
 		reply.serverDst = msg.serverSrc
 		return reply
@@ -147,7 +147,7 @@ class Client(ActiveObject):
 		reply = msg.send()
 		
 		if reply != None:
-			self.__connected = True				
+			self.__connected = True
 			if self.skt: self.skt.close()
 
 			if reply.type != "SyncClientListMessage":
@@ -177,6 +177,6 @@ class Client(ActiveObject):
 				self.__clients.append(i)
 		
 		# Print Client list (debug)
-		self.output("CLIENT LIST")
+		self.output("CLIENT LIST (%d clients except me)" % len(self.__clients))
 		for c in self.__clients:
 			self.output("%s" % c)

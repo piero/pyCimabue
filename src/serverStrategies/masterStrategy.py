@@ -16,6 +16,8 @@ class MasterStrategy(ServerStrategy):
 		self.servers = {}			# List of Servers: (name, (ip, port))
 		self.servers_ping = {}		# Servers ping timestamps (name, last_ping_ts)
 		self.clients_ping = {}		# Clients ping timestamps (name, last_ping_ts)
+		self.servers_lock = threading.Lock()
+		self.clients_lock = threading.Lock()
 		self.backup = backup
 		
 		self.__server.output("Behaviour: %s" % self.name)
@@ -25,12 +27,15 @@ class MasterStrategy(ServerStrategy):
 	
 	def _process_ConnectMessage(self, msg):
 		self.__server.output("Processing ConnectMessage")
+		self.clients_lock.acquire()
 		self.clients[msg.clientSrc] = (msg.serverDst, int(msg.data))
+		self.clients_ping[msg.clientSrc] = time.time()
+		self.clients_lock.release()
 		self.__server.output("[+] Added client %s (%s:%d)" % (msg.clientSrc,
 															self.clients[msg.clientSrc][0],
 															self.clients[msg.clientSrc][1]))
 				
-		c_names = self.sync_client_list(msg.clientSrc)
+		c_names = self.sync_client_list(except_client=msg.clientSrc)
 		
 		reply = SyncClientListMessage(msg.skt, msg.priority)
 		reply.clientDst = msg.clientSrc
@@ -43,13 +48,14 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("Processing SendMessage")
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
+		self.clients_lock.acquire()
 		if msg.clientDst in self.clients.keys():
 			# Forward the message to the destination client
 			reply = self.__forward_message(self.clients[msg.clientDst], msg)
-			
 		else:
 			reply = ErrorMessage(msg.skt, msg.priority)
 			reply.data = "Destination not found: " + msg.clientDst
+		self.clients_lock.release()
 		
 		reply.serverSrc = self.__server.get_name()
 		reply.clientDst = msg.clientSrc
@@ -63,7 +69,7 @@ class MasterStrategy(ServerStrategy):
 		if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
 		
 		# Process Ping messages from other servers
-		if msg.serverSrc != None:
+		if msg.serverSrc != "":
 			if self.backup != None and msg.serverSrc != self.backup[0] and msg.serverSrc not in self.servers.keys():
 				self.__server.output("Received Ping from unknown server %s" % msg.serverSrc)
 				return ErrorMessage(msg.skt)
@@ -77,13 +83,15 @@ class MasterStrategy(ServerStrategy):
 			return reply
 		
 		# Process Ping messages from clients
-		elif msg.clientSrc != None:
+		elif msg.clientSrc != "":
 			if msg.clientSrc not in self.clients.keys():
 				self.__server.output("Received Ping from unknown client %s" % msg.clientSrc)
 				return ErrorMessage(msg.skt)
 			
 			# Update ping list
+			self.clients_lock.acquire()
 			self.clients_ping[msg.clientSrc] = time.time()
+			self.clients_lock.release()
 			
 			reply = PingMessage(msg.skt, msg.priority)
 			reply.serverSrc = self.__server.get_name()
@@ -156,31 +164,35 @@ class MasterStrategy(ServerStrategy):
 		return msg
 	
 	
-	def sync_client_list(self, client=None):
+	def sync_client_list(self, except_client=None):
 		c_names = []
 		c_ip = []
 		c_port = []
 		
+		self.clients_lock.acquire()
 		for c in self.clients.keys():
 			c_names.append(c)
 			c_ip.append(self.clients[c][0])
 			c_port.append(self.clients[c][1])
+		self.clients_lock.release()
 		
-		if client != None:
-			# Notify the other clients
-			client_update = SyncClientListMessage(priority=0)
-			client_update.serverSrc = self.__server.get_name()
-			client_update.data = pickle.dumps(c_names)
-			
-			for c in self.clients.keys():
-				if c != client:
-					self.__server.output("[i] Updating clients on %s..." % c)
-					client_update.clientDst = c
-					
-					reply = client_update.send(self.clients[c][0], self.clients[c][1])
-					if reply == None or reply.type == ErrorMessage:
-						self.__server.output("[!] Error synchronizing client list on %s" % c)
-	
+		#if except_client != None:
+		# Notify the other clients
+		client_update = SyncClientListMessage(priority=0)
+		client_update.serverSrc = self.__server.get_name()
+		client_update.data = pickle.dumps(c_names)
+		
+		self.clients_lock.acquire()
+		for c in self.clients.keys():
+			if except_client != None and c != except_client:
+				self.__server.output("[i] Updating clients on %s..." % c)
+				client_update.clientDst = c
+				
+				reply = client_update.send(self.clients[c][0], self.clients[c][1])
+				if reply == None or reply.type != 'SyncClientListMessage':
+					self.__server.output("[!] Error synchronizing client list on %s" % c)
+		self.clients_lock.release()
+
 		# Notify the Backup Server
 		if self.backup != None:
 			self.__server.output("[i] Updating clients on Backup Server %s..." % self.backup[0])

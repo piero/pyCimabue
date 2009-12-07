@@ -73,6 +73,23 @@ class Listener(threading.Thread):
 																	self.__SELECT_TIMEOUT)
 			except socket.error, (value, message):
 				self.__logger.error("[!] SOCKET ERROR: %s" % str(message))
+				listen_skt.close()
+				
+				# Create a new listen socket
+				try:
+					listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+					listen_skt.bind((self.__HOST, self.__PORT))
+					self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
+					listen_skt.listen(self.__backlog)
+		
+				except socket.error, (value, message):
+					if listen_skt:
+						listen_skt.close()
+					self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
+					sys.exit(1)
+				
+				input = [listen_skt, sys.stdin]
 				continue
 				
 			for skt in inputready:
