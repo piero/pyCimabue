@@ -51,6 +51,7 @@ class PingAgent(threading.Thread):
 
 	def __run_as_master(self):
 		# Check other servers
+		self.__caller.get_role().servers_lock.acquire()
 		for k in self.__caller.get_role().servers_ping.keys():
 			if (time.time() - self.__caller.get_role().servers_ping[k] > self.__SERVER_TIMEOUT):
 				del self.__caller.get_role().servers_ping[k]
@@ -66,6 +67,7 @@ class PingAgent(threading.Thread):
 					self.__caller.get_role().backup = None
 					self.__caller.output("Backup Server left (%s)!" % k, logging.WARNING)
 					# TODO: Start Backup rescue procedure!
+		self.__caller.get_role().servers_lock.release()
 				
 		# Check clients
 		self.__caller.get_role().clients_lock.acquire()

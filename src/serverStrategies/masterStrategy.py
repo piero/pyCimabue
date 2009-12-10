@@ -75,7 +75,9 @@ class MasterStrategy(ServerStrategy):
 				return ErrorMessage(msg.skt)
 		
 			# Update ping list
+			self.servers_lock.acquire()
 			self.servers_ping[msg.serverSrc] = time.time()
+			self.servers_lock.release()
 				
 			reply = PingMessage(msg.skt, msg.priority)
 			reply.serverSrc = self.__server.get_name()
@@ -115,20 +117,27 @@ class MasterStrategy(ServerStrategy):
 		self.__server.output("Processing HelloMessage")
 		
 		if self.backup == None:
+			self.servers_lock.acquire()
 			self.backup = (msg.serverSrc, msg.clientSrc, int(msg.clientDst))
 			self.servers_ping[msg.serverSrc] = time.time()
+			self.servers_lock.release()
+			
 			self.__server.output("Set backup: %s (%s:%d) [%d]" % (self.backup[0],
 																self.backup[1],
 																self.backup[2],
 																self.servers_ping[msg.serverSrc]))
 			reply = WelcomeBackupMessage(msg.skt, msg.priority)
+		
 		else:
 			reply = WelcomeIdleMessage(msg.skt, msg.priority)
 			
 			# Add new Server
+			self.servers_lock.acquire()
 			self.servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
 			self.servers_ping[msg.serverSrc] = time.time()
 			s = self.servers[msg.serverSrc]
+			self.servers_lock.release()
+			
 			self.__server.output("Added: %s (%s:%d) [%d]" % (msg.serverSrc,
 															s[0],
 															s[1],
@@ -153,10 +162,12 @@ class MasterStrategy(ServerStrategy):
 		s_ip = []
 		s_port = []
 		
+		self.servers_lock.acquire()
 		for s in self.servers.keys():
 			s_names.append(s)
 			s_ip.append(self.servers[s][0])
 			s_port.append(self.servers[s][1])
+		self.servers_lock.release()
 			
 		msg.clientSrc = pickle.dumps(s_names)
 		msg.clientDst = pickle.dumps(s_ip)
