@@ -195,7 +195,7 @@ class MasterStrategy(ServerStrategy):
 		
 		self.clients_lock.acquire()
 		for c in self.clients.keys():
-			if except_client != None and c != except_client:
+			if c != except_client:
 				self.__server.output("[i] Updating clients on %s..." % c)
 				client_update.clientDst = c
 				

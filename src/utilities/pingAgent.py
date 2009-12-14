@@ -58,14 +58,14 @@ class PingAgent(threading.Thread):
 				
 				if self.__caller.get_role().backup != None and k != self.__caller.get_role().backup[0]:
 					del self.__caller.get_role().servers[k]
-					self.__caller.output("Removed %s (%d servers left)" % (k, len(self.__caller.get_role().servers)),
+					self.__caller.output("[-] Removed %s (%d servers left)" % (k, len(self.__caller.get_role().servers)),
 										logging.WARNING)
 					self.__caller.get_role().sync_server_list()
 				
 				else:
 					del self.__caller.get_role().backup
 					self.__caller.get_role().backup = None
-					self.__caller.output("Backup Server left (%s)!" % k, logging.WARNING)
+					self.__caller.output("[!] Backup Server left (%s)!" % k, logging.WARNING)
 					# TODO: Start Backup rescue procedure!
 		self.__caller.get_role().servers_lock.release()
 				
@@ -75,7 +75,7 @@ class PingAgent(threading.Thread):
 			if (time.time() - self.__caller.get_role().clients_ping[k] > self.__CLIENT_TIMEOUT):
 				del self.__caller.get_role().clients_ping[k]
 				del self.__caller.get_role().clients[k]
-				self.__caller.output("Removed %s (%d clients left)" % (k, len(self.__caller.get_role().clients)),
+				self.__caller.output("[-] Removed %s (%d clients left)" % (k, len(self.__caller.get_role().clients)),
 										logging.WARNING)
 				
 				self.__caller.get_role().clients_lock.release()
@@ -95,14 +95,14 @@ class PingAgent(threading.Thread):
 
 		# Master not replying: trigger rescue procedure
 		if reply == None:
-			self.__caller.output(("Master %s not replying!" % master[0]), logging.WARNING)
+			self.__caller.output(("[!] Master %s not replying!" % master[0]), logging.WARNING)
 			
 			if self.__caller.get_role().name == self.__caller.BACKUP:
 				self.__caller.get_role().elect_new_master()
 		
 		# Master has changed, make it know we're here
 		elif reply.type == "ErrorMessage":
-			self.__caller.output(("Master %s doesn't know me" % master[0]), logging.WARNING)
+			self.__caller.output(("[!] Master %s doesn't know me" % master[0]), logging.WARNING)
 			self.__caller.query_role()
 	
 	
@@ -116,5 +116,5 @@ class PingAgent(threading.Thread):
 		reply = msg.send(self.__caller.server_ip, self.__caller.server_port)
 		
 		if reply != None and reply.type == 'ErrorMessage':
-			self.__caller.output(("Master %s doesn't know me" % self.__caller.server_name), logging.WARNING)
+			self.__caller.output(("[!] Master %s doesn't know me" % self.__caller.server_name), logging.WARNING)
 			self.__caller.connect_to_server(self.__caller.server_ip, self.__caller.server_port)
