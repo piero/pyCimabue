@@ -11,7 +11,7 @@ from utilities.nullHandler import *
 
 class Message:
 
-	def __init__(self, use_socket = None, priority = 2, wait_for_reply = True):
+	def __init__(self, use_socket=None, priority=2, wait_for_reply=True):
 		self.type = self.__class__.__name__
 		self.priority = priority
 		self.clientSrc = ""
@@ -85,7 +85,7 @@ class Message:
 			self.__wait_for_reply = False
 
 
-	def send(self, dstAddress = None, dstPort = None):
+	def send(self, dstAddress=None, dstPort=None):
 		if self.__use_external_socket == False:
 			try:
 				#self.logger.debug("[MSG] Creating internal socket")
