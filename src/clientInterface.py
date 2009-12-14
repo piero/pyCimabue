@@ -45,7 +45,16 @@ class ClientInterface:
         self.window.connect("delete_event", self.delete_event)
         self.window.set_border_width(10)
 
-        self.outerBox = gtk.VBox(False, 0)
+        # Address box
+        self.addressField = gtk.Entry(20)
+        self.addressField.set_text("127.0.0.1")
+        self.addressField.show()
+        self.portField = gtk.Entry(6)
+        self.portField.set_text("24000")
+        self.portField.show()
+        self.addressBox = gtk.HBox(False, 0)
+        self.addressBox.pack_start(self.addressField, True, True, 0)
+        self.addressBox.pack_start(self.portField, True, True, 10)
         
         # Text output
         self.textOutput = gtk.TextView()
@@ -60,9 +69,6 @@ class ClientInterface:
         textOutputScroll.show()
         self.textOutput.show()
         
-        self.outerBox.pack_start(textOutputScroll, True, True, 0)
-        self.window.add(self.outerBox)
-        
         # Text input
         self.textInput = gtk.TextView()
         self.textInput.set_wrap_mode(gtk.WRAP_WORD)
@@ -76,8 +82,6 @@ class ClientInterface:
         textInputScroll.show()
         self.textInput.show()
         
-        self.outerBox.pack_start(textInputScroll, True, True, 10)
-        
         # Send button
         self.sendButton = gtk.Button("Send")
         self.sendButton.connect("clicked", self.callback)
@@ -85,8 +89,16 @@ class ClientInterface:
         self.buttonBox.pack_start(self.sendButton, True, True, 0)
         self.sendButton.show()
         
+        # Main box
+        self.outerBox = gtk.VBox(False, 0)
+        self.outerBox.pack_start(self.addressBox, True, True, 0)
+        self.outerBox.pack_start(textOutputScroll, True, True, 10)
+        self.outerBox.pack_start(textInputScroll, True, True, 10)
         self.outerBox.pack_start(self.buttonBox, True, True, 10)
         
+        self.window.add(self.outerBox)
+        
+        self.addressBox.show()
         self.buttonBox.show()
         self.outerBox.show()
         self.window.show()
