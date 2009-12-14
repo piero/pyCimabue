@@ -126,7 +126,7 @@ class Server(ActiveObject):
 			try:
 				skt.connect((output_list[i][0], int(output_list[i][1])))
 			except socket.error:
-				if skt:	skt.close()
+				if skt != None:	skt.close()
 				continue
 	
 			# Send 'Hello' message
@@ -136,8 +136,8 @@ class Server(ActiveObject):
 			msg.clientDst = str(self.port)			# Our Port
 			reply = msg.send()
 			if reply != None:
-				connected = True	
-			if skt: skt.close()
+				connected = True
+			if skt != None: skt.close()
 
 			if reply.type == 'ErrorMessage':
 				continue	# Oops, it wasn't the Master Server
