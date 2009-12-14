@@ -35,7 +35,13 @@ class Message:
 		if self.skt != None:
 			self.__use_external_socket = True
 			#self.logger.debug("[%s] Using external socket: %d" % (self.type, self.skt.fileno()))
-		
+	
+	
+	def __del__(self):
+		if self.__use_external_socket == False and self.skt != None:
+			#self.logger.debug("[MSG] Closing internal socket")
+			self.skt.close()
+	
 
 	def __str__(self):
 		msg = "[" + self.type + "]\n"
@@ -82,6 +88,7 @@ class Message:
 	def send(self, dstAddress = None, dstPort = None):
 		if self.__use_external_socket == False:
 			try:
+				#self.logger.debug("[MSG] Creating internal socket")
 				self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				self.skt.connect((dstAddress, dstPort))
 	
