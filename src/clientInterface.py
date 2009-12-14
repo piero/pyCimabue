@@ -71,7 +71,7 @@ class ClientInterface:
         
         # Send button
         self.sendButton = gtk.Button("Send")
-        self.sendButton.connect("clicked", self.callback, "button 1")
+        self.sendButton.connect("clicked", self.callback)
         self.buttonBox = gtk.HBox(False, 0)
         self.buttonBox.pack_start(self.sendButton, True, True, 0)
         self.sendButton.show()
