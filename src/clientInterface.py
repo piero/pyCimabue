@@ -46,61 +46,85 @@ class ClientInterface:
         self.window.set_border_width(10)
 
         # Address box
+        addressLabel = gtk.Label("address")
+        addressLabel.show()
         self.addressField = gtk.Entry(20)
         self.addressField.set_text("127.0.0.1")
         self.addressField.show()
+        
+        portLabel = gtk.Label("port")
+        portLabel.show()
         self.portField = gtk.Entry(6)
         self.portField.set_text("24000")
         self.portField.show()
-        self.addressBox = gtk.HBox(False, 0)
-        self.addressBox.pack_start(self.addressField, True, True, 0)
-        self.addressBox.pack_start(self.portField, True, True, 10)
+        addressBox = gtk.HBox(False, 0)
+        addressBox.pack_start(addressLabel, True, True, 0)
+        addressBox.pack_start(self.addressField, True, True, 10)
+        addressBox.pack_start(portLabel, True, True, 0)
+        addressBox.pack_start(self.portField, True, True, 10)
+        addressBox.show()
         
         # Text output
-        self.textOutput = gtk.TextView()
-        self.textOutput.set_wrap_mode(gtk.WRAP_WORD)
-        self.textOutput.set_editable(False)
-        self.textOutputBuffer = self.textOutput.get_buffer()
+        textOutput = gtk.TextView()
+        textOutput.set_wrap_mode(gtk.WRAP_WORD)
+        textOutput.set_editable(False)
+        textOutput.show()
+        self.textOutputBuffer = textOutput.get_buffer()
+        
+        textOutputLabel = gtk.Label("Received")
+        textOutputLabel.show()
         
         # Text output scroll
         textOutputScroll = gtk.ScrolledWindow()
         textOutputScroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        textOutputScroll.add(self.textOutput)
+        textOutputScroll.add(textOutput)
         textOutputScroll.show()
-        self.textOutput.show()
+        
+        
+        textOutputBox = gtk.VBox(False, 0)
+        textOutputBox.pack_start(textOutputLabel, True, True, 10)
+        textOutputBox.pack_start(textOutputScroll, True, True, 10)
+        textOutputBox.show()
+        
+        
+        textInputLabel = gtk.Label("Send")
+        textInputLabel.show()
         
         # Text input
-        self.textInput = gtk.TextView()
-        self.textInput.set_wrap_mode(gtk.WRAP_WORD)
-        self.textInput.set_editable(True)
-        self.textInputBuffer = self.textInput.get_buffer()
+        textInput = gtk.TextView()
+        textInput.set_wrap_mode(gtk.WRAP_WORD)
+        textInput.set_editable(True)
+        self.textInputBuffer = textInput.get_buffer()
+        textInput.show()
         
         # Text input scroll
         textInputScroll = gtk.ScrolledWindow()
         textInputScroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        textInputScroll.add(self.textInput)
+        textInputScroll.add(textInput)
         textInputScroll.show()
-        self.textInput.show()
+        
+        textInputBox = gtk.VBox(False, 0)
+        textInputBox.pack_start(textInputLabel, True, True, 0)
+        textInputBox.pack_start(textInputScroll, True, True, 10)
+        textInputBox.show()
         
         # Send button
         self.sendButton = gtk.Button("Send")
         self.sendButton.connect("clicked", self.callback)
-        self.buttonBox = gtk.HBox(False, 0)
-        self.buttonBox.pack_start(self.sendButton, True, True, 0)
         self.sendButton.show()
+        buttonBox = gtk.HBox(False, 0)
+        buttonBox.pack_start(self.sendButton, True, True, 0)
+        buttonBox.show()
         
         # Main box
-        self.outerBox = gtk.VBox(False, 0)
-        self.outerBox.pack_start(self.addressBox, True, True, 0)
-        self.outerBox.pack_start(textOutputScroll, True, True, 10)
-        self.outerBox.pack_start(textInputScroll, True, True, 10)
-        self.outerBox.pack_start(self.buttonBox, True, True, 10)
+        outerBox = gtk.VBox(False, 0)
+        outerBox.pack_start(addressBox, True, True, 0)
+        outerBox.pack_start(textOutputBox, True, True, 10)
+        outerBox.pack_start(textInputBox, True, True, 10)
+        outerBox.pack_start(buttonBox, True, True, 10)
+        outerBox.show()
         
-        self.window.add(self.outerBox)
-        
-        self.addressBox.show()
-        self.buttonBox.show()
-        self.outerBox.show()
+        self.window.add(outerBox)
         self.window.show()
     
     
