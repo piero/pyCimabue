@@ -62,6 +62,10 @@ class Client(ActiveObject):
 	
 	
 	def send_message(self, destination, message):
+		if destination not in self.__clients:
+			self.interface.print_message("Destination %s doesn't exists" % destination)
+			return None
+		
 		# Create the message to send
 		msg = SendMessage(self.skt)
 		msg.clientSrc = self.__name
