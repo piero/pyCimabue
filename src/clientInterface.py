@@ -64,13 +64,14 @@ class ClientInterface:
         addressBox.pack_start(self.portField, True, True, 10)
         addressBox.show()
         
-        # Text output
+        # Text output field
         textOutput = gtk.TextView()
         textOutput.set_wrap_mode(gtk.WRAP_WORD)
         textOutput.set_editable(False)
         textOutput.show()
         self.textOutputBuffer = textOutput.get_buffer()
         
+        # Text output label
         textOutputLabel = gtk.Label("Received")
         textOutputLabel.show()
         
@@ -80,17 +81,17 @@ class ClientInterface:
         textOutputScroll.add(textOutput)
         textOutputScroll.show()
         
-        
+        # Text output box
         textOutputBox = gtk.VBox(False, 0)
         textOutputBox.pack_start(textOutputLabel, True, True, 10)
         textOutputBox.pack_start(textOutputScroll, True, True, 10)
         textOutputBox.show()
         
-        
+        # Text input label
         textInputLabel = gtk.Label("Send")
         textInputLabel.show()
         
-        # Text input
+        # Text input field
         textInput = gtk.TextView()
         textInput.set_wrap_mode(gtk.WRAP_WORD)
         textInput.set_editable(True)
@@ -103,6 +104,7 @@ class ClientInterface:
         textInputScroll.add(textInput)
         textInputScroll.show()
         
+        # Text input box
         textInputBox = gtk.VBox(False, 0)
         textInputBox.pack_start(textInputLabel, True, True, 0)
         textInputBox.pack_start(textInputScroll, True, True, 10)
