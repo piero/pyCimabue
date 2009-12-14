@@ -20,6 +20,9 @@ class ClientInterface:
         text = self.textInputBuffer.get_text(self.textInputBuffer.get_start_iter(),
                                       self.textInputBuffer.get_end_iter(),
                                       include_hidden_chars=False)
+        # Delete text from the input box
+        self.textInputBuffer.set_text('')
+        
         print "Writing: %s" % text
         iter = self.textOutputBuffer.get_end_iter()
         self.textOutputBuffer.insert(iter, "%s\n" % text)
@@ -29,6 +32,12 @@ class ClientInterface:
         print "delete event occurred"
         gtk.main_quit()
         return False
+    
+    
+    def print_message(self, msg):
+        if msg != None:
+            iter = self.textOutputBuffer.get_end_iter()
+            self.textOutputBuffer.insert(iter, "%s\n" % msg)
     
     
     def __init__(self):
