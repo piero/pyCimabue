@@ -19,7 +19,7 @@ class ClientOutput(threading.Thread):
 	
 	
 	def print_message(self, msg):
-		print msg
+		print "[OUT] %s" % msg
 
 
 	def stop(self):
@@ -29,8 +29,10 @@ class ClientOutput(threading.Thread):
 	def run(self):
 		self.__running = True
 		
+		print '[o] ClientOutput running'
+		
 		while self.__running:
-			pass
+			time.sleep(1)
 		
 		print '[x] ClientOutput'
 
@@ -47,6 +49,8 @@ class ClientInput(threading.Thread):
 	def run(self):
 		self.__running = True
 		
+		print '[o] ClientInput running'
+		
 		while self.__running:
 			#print '>>>'
 			
@@ -59,11 +63,13 @@ class ClientInput(threading.Thread):
 			for s in inputready:
 				line = sys.stdin.readline()
 				
-				if line == '\n':
+				if line == "\n":
 					self.__running = False
 					break
 				
 				dest, msg = line.split(' ', 2)
+				
+				print "DEST: %s MSG: %s" % (dest, msg)
 				
 				reply = client.send_message(dest.rstrip('\n'), msg.rstrip('\n'))
 				if reply != None:
@@ -103,7 +109,10 @@ if __name__=="__main__":
 	
 	# Exit
 	client_input.stop()
+	client_input.join()
 	listener.stop()
+	listener.join()
 	client_output.stop()
+	client_output.join()
 	print "Bye :)"
 	sys.exit()
