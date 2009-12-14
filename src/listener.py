@@ -93,11 +93,10 @@ class Listener(threading.Thread):
 				continue
 				
 			for skt in inputready:
-	
+				
 				if skt == listen_skt:
 					# Handle server socket
 					new_skt, address = skt.accept()
-					#print '+++++ New connection from', address
 					new_skt.settimeout(self.__RECV_TIMEOUT)
 					input.append(new_skt)
 			
@@ -134,8 +133,13 @@ class Listener(threading.Thread):
 							pass
 						except IndexError:
 							pass
+					
+					else:
+						input.remove(skt)
+						break
 
 		# Exit
+		if skt: skt.close()
 		listen_skt.close()
 		self.__executioner.stop()
 		self.__logger.debug("Joining executioner...")
