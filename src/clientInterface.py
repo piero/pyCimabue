@@ -34,6 +34,20 @@ class ClientInterface:
         return False
     
     
+    def create_new_client(self, widget, data=None):
+        if self.client == None and data != None:
+            widget.set_sensitive(False)
+            print "Creating new client %s:%s..." % data
+            self.client = Client(data[0], int(data[1]))
+            self.client.logger.setLevel(logging.DEBUG)
+            self.client.interface = self
+            
+            self.listener = Listener(executioner=self.client,
+                                host=data[0], port=int(data[1]))
+            self.listener.start()
+            self.client.connect()
+    
+    
     def print_message(self, msg):
         if msg != None:
             iter = self.textOutputBuffer.get_end_iter()
@@ -41,6 +55,9 @@ class ClientInterface:
     
     
     def __init__(self):
+        self.client = None
+        self.listener = None
+        
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("delete_event", self.delete_event)
         self.window.set_border_width(10)
@@ -57,11 +74,18 @@ class ClientInterface:
         self.portField = gtk.Entry(6)
         self.portField.set_text("24000")
         self.portField.show()
+        
+        connectButton = gtk.Button("Connect")
+        connectButton.connect("clicked", self.create_new_client, (self.addressField.get_text(),
+                                                                  self.portField.get_text()))
+        connectButton.show()
+        
         addressBox = gtk.HBox(False, 0)
         addressBox.pack_start(addressLabel, True, True, 0)
         addressBox.pack_start(self.addressField, True, True, 10)
-        addressBox.pack_start(portLabel, True, True, 0)
+        addressBox.pack_start(portLabel, True, True, 10)
         addressBox.pack_start(self.portField, True, True, 10)
+        addressBox.pack_start(connectButton, True, True, 10)
         addressBox.show()
         
         # Text output field
