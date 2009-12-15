@@ -53,12 +53,15 @@ class Client(ActiveObject):
 		
 		if not self.__connected:
 			self.output("No server found!", logging.CRITICAL)
+			return False
+		
 		else:
 			self.output("Connected to %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port))
 			
 			# Start the Ping Agent
 			self.__ping_agent = PingAgent(caller=self, run_as_server=False)
 			self.__ping_agent.start()
+			return True
 	
 	
 	def send_message(self, destination, message):

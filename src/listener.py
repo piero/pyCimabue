@@ -136,10 +136,10 @@ class Listener(threading.Thread):
 					
 					else:
 						input.remove(skt)
+						skt.close()
 						break
 
 		# Exit
-		if skt: skt.close()
 		listen_skt.close()
 		self.__executioner.stop()
 		self.__logger.debug("Joining executioner...")

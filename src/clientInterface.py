@@ -29,12 +29,23 @@ class ClientInterface:
     
     
     def delete_event(self, widget, event, data=None):
-        print "delete event occurred"
+        print "Bye :)"
+        self.__destroy_client()
         gtk.main_quit()
-        return False
+        
+    
+    def __destroy_client(self):
+        if self.listener != None:
+            self.listener.stop()
+            self.listener.join(2.0)
+            self.listener = None
+        
+        if self.client != None:
+            del self.client
+            self.client = None
     
     
-    def create_new_client(self, widget, data=None):
+    def __create_new_client(self, widget, data=None):
         if self.client == None and data != None:
             widget.set_sensitive(False)
             print "Creating new client %s:%s..." % data
@@ -45,14 +56,26 @@ class ClientInterface:
             self.listener = Listener(executioner=self.client,
                                 host=data[0], port=int(data[1]))
             self.listener.start()
-            self.client.connect()
+            connected = self.client.connect()
+            
+            if connected:
+                self.set_status("Connected to server")
+            else:
+                self.set_status("ERROR: No server found")
+                self.__destroy_client()
+                widget.set_sensitive(True)
     
-    
+          
     def print_message(self, msg):
         if msg != None:
             iter = self.textOutputBuffer.get_end_iter()
             self.textOutputBuffer.insert(iter, "%s\n" % msg)
     
+    
+    def set_status(self, msg):
+        if msg != None:
+            self.statusBar.push(self.context_id, msg)
+        
     
     def __init__(self):
         self.client = None
@@ -76,7 +99,7 @@ class ClientInterface:
         self.portField.show()
         
         connectButton = gtk.Button("Connect")
-        connectButton.connect("clicked", self.create_new_client, (self.addressField.get_text(),
+        connectButton.connect("clicked", self.__create_new_client, (self.addressField.get_text(),
                                                                   self.portField.get_text()))
         connectButton.show()
         
@@ -142,12 +165,19 @@ class ClientInterface:
         buttonBox.pack_start(self.sendButton, True, True, 0)
         buttonBox.show()
         
+        # Status bar
+        self.statusBar = gtk.Statusbar()
+        self.statusBar.show()
+        self.context_id = self.statusBar.get_context_id("Statusbar")
+
+        
         # Main box
         outerBox = gtk.VBox(False, 0)
         outerBox.pack_start(addressBox, True, True, 0)
         outerBox.pack_start(textOutputBox, True, True, 10)
         outerBox.pack_start(textInputBox, True, True, 10)
         outerBox.pack_start(buttonBox, True, True, 10)
+        outerBox.pack_start(self.statusBar, True, True, 10)
         outerBox.show()
         
         self.window.add(outerBox)
