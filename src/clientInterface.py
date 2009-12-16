@@ -46,15 +46,23 @@ class ClientInterface:
     
     
     def __create_new_client(self, widget, data=None):
-        if self.client == None and data != None:
-            widget.set_sensitive(False)
-            print "Creating new client %s:%s..." % data
-            self.client = Client(data[0], int(data[1]))
+        if self.client != None:
+            self.__destroy_client()
+            
+        widget.set_sensitive(False)
+        address = self.addressField.get_text()
+        port = self.portField.get_text()
+        
+        if address == None or port == None:
+            self.set_status("ERROR: Invalid address or port")
+        else:
+            print "Creating new client %s:%s..." % (address, port)
+            self.client = Client(address, int(port))
             self.client.logger.setLevel(logging.DEBUG)
             self.client.interface = self
             
             self.listener = Listener(executioner=self.client,
-                                host=data[0], port=int(data[1]))
+                                host=address, port=int(port))
             self.listener.start()
             connected = self.client.connect()
             
@@ -65,7 +73,7 @@ class ClientInterface:
                 self.__destroy_client()
                 widget.set_sensitive(True)
     
-          
+    
     def print_message(self, msg):
         if msg != None:
             iter = self.textOutputBuffer.get_end_iter()
@@ -99,8 +107,7 @@ class ClientInterface:
         self.portField.show()
         
         connectButton = gtk.Button("Connect")
-        connectButton.connect("clicked", self.__create_new_client, (self.addressField.get_text(),
-                                                                  self.portField.get_text()))
+        connectButton.connect("clicked", self.__create_new_client)
         connectButton.show()
         
         addressBox = gtk.HBox(False, 0)
