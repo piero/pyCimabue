@@ -41,7 +41,7 @@ class ClientInterface:
             self.listener = None
         
         if self.client != None:
-            del self.client
+            self.client.kill()
             self.client = None
     
     
