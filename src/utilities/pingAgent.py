@@ -36,17 +36,15 @@ class PingAgent(threading.Thread):
 		while self.__running:
 			time.sleep(self.__interval)
 			
-			if self.__running:
+			if not self.__running:
+				self.__caller.output("[ ] PingAgent is stopping...")
 				break
 			
 			if self.__is_server:
-				
 				if self.__caller.get_role().__class__.__name__ == self.__caller.MASTER:
 					self.__run_as_master()
-				
 				else:
 					self.__run_as_slave()
-			
 			else:
 				self.__run_as_client()
 					
@@ -54,8 +52,8 @@ class PingAgent(threading.Thread):
 	
 	
 	def stop(self):
+		self.__caller.output("[ ] PingAgent requested to stop")
 		self.__running = False
-		self.__caller.output("[ ] PingAgent is stopping...")
 
 
 	def __run_as_master(self):
