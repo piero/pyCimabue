@@ -91,7 +91,12 @@ class Listener(threading.Thread):
 				
 				input = [listen_skt, sys.stdin]
 				continue
-				
+			
+			if inputready == [] and outputready == [] and exceptready == []:
+				# Select timeout
+				if not self.__running:
+					break
+			
 			for skt in inputready:
 				
 				if skt == listen_skt:
