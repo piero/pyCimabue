@@ -28,10 +28,11 @@ class Client(ActiveObject):
 		self.output(("CLIENT %s" % self.__name), logging.INFO)
 	
 	
-	def __del__(self):
+	def kill(self):
+		if self.__ping_agent != None:
+			self.__ping_agent.stop()
+			self.__ping_agent.join(2.0)
 		self.output("[x] Client", logging.INFO)
-		self.__ping_agent.stop()
-		self.__ping_agent.join(2.0)
 	
 	
 	def get_name(self):

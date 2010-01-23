@@ -25,28 +25,20 @@ class PingAgent(threading.Thread):
 			self.__caller.output("[ ] Ping Agent - running as Client")
 	
 	
-	def __del__(self):
-		self.__running = False
-		self.__caller.output("[ ] PingAgent is quitting...")
-	
-	
 	def run(self):
 		self.__running = True
 		
 		while self.__running:
 			time.sleep(self.__interval)
 			
-			if self.__running:
+			if not self.__running:
 				break
 			
 			if self.__is_server:
-				
 				if self.__caller.get_role().__class__.__name__ == self.__caller.MASTER:
 					self.__run_as_master()
-				
 				else:
 					self.__run_as_slave()
-			
 			else:
 				self.__run_as_client()
 					
@@ -55,7 +47,6 @@ class PingAgent(threading.Thread):
 	
 	def stop(self):
 		self.__running = False
-		self.__caller.output("[ ] PingAgent is stopping...")
 
 
 	def __run_as_master(self):
