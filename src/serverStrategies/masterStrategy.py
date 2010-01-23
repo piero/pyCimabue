@@ -162,7 +162,6 @@ class MasterStrategy(ServerStrategy):
         
     
     def _process_SyncClientListMessage(self, msg):
-        self.__server.output("Processing SyncClientListMessage")
         c_name = pickle.loads(msg.data)
         c_ip = pickle.loads(msg.clientSrc)
         c_port = pickle.loads(msg.clientDst)
@@ -174,11 +173,6 @@ class MasterStrategy(ServerStrategy):
             self.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
         self.clients_lock.release()
         
-        # Print Client list (debug)
-        self.__server.output("CLIENT LIST")
-        for c in self.clients.keys():
-            self.__server.output("%s (%s:%d)" % (c, self.clients[c][0], self.clients[c][1]))
-        
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
         reply.clientDst = msg.clientSrc
@@ -186,7 +180,6 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_SyncServerListMessage(self, msg):
-        self.__server.output("Processing SyncServerListMessage")
         s_name = pickle.loads(msg.data)
         s_ip = pickle.loads(msg.clientSrc)
         s_port = pickle.loads(msg.clientDst)
@@ -197,11 +190,6 @@ class MasterStrategy(ServerStrategy):
         for i in range(len(s_name)):
             self.servers[s_name[i]] = (s_ip[i], int(s_port[i]))
         self.servers_lock.release()
-        
-        # Print Server list (debug)
-        self.__server.output("SERVER LIST")
-        for s in self.servers.keys():
-            self.__server.output("%s (%s:%d)" % (s, self.servers[s][0], self.servers[s][1]))
         
         reply = SyncServerListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -243,7 +231,6 @@ class MasterStrategy(ServerStrategy):
             c_port.append(self.clients[c][1])
         self.clients_lock.release()
         
-        #if except_client != None:
         # Notify the other clients
         client_update = SyncClientListMessage(priority=0)
         client_update.serverSrc = self.__server.get_name()
