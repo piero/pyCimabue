@@ -25,11 +25,12 @@ class Client(ActiveObject):
         self.__clients = []
         self.__connected = False
         self.__ping_agent = None
+        self.interface = None
         self.output(("CLIENT %s" % self.__name), logging.INFO)
     
     
     def kill(self):
-        if self.__ping_agent != None:
+        if self.__ping_agent is not None:
             self.__ping_agent.stop()
             self.__ping_agent.join(2.0)
         self.output("[x] Client", logging.INFO)
@@ -80,8 +81,8 @@ class Client(ActiveObject):
         
         # Send the message
         reply = msg.send()
-        if reply == None:
-            if self.interface != None:
+        if reply is None:
+            if self.interface is not None:
                 self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
         
         return reply
@@ -109,7 +110,7 @@ class Client(ActiveObject):
     def _process_SendMessage(self, msg):
         print 'Processing SendMessage'
         
-        if self.interface != None:
+        if self.interface is not None:
             self.interface.print_message("%s: %s" % (msg.clientSrc, msg.data))
         
         reply = Message(msg.skt, msg.priority)
@@ -168,7 +169,7 @@ class Client(ActiveObject):
         msg.data = str(self.port)            # Our Port
         reply = msg.send()
         
-        if reply != None:
+        if reply is not None:
             self.__connected = True
             if self.skt: self.skt.close()
 
@@ -182,7 +183,7 @@ class Client(ActiveObject):
                 self.server_name = reply.serverSrc
                 
                 # Update clients list
-                if reply.data != None:
+                if reply.data is not None:
                     c_names = pickle.loads(reply.data)
                     self.__update_client_list(c_names)
         
@@ -197,6 +198,8 @@ class Client(ActiveObject):
         for i in client_list:
             if i != self.__name:
                 self.__clients.append(i)
+                if self.interface is not None:
+                    self.interface.addClientCallback(i)
         
         # Print Client list (debug)
         self.output("CLIENT LIST (%d clients except me)" % len(self.__clients))

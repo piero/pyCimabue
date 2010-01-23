@@ -10,13 +10,22 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+import gobject
+import threading
 from listener import *
 from client import *
+
+# Allow other threads to run
+gobject.threads_init()
 
 
 class ClientInterface:
     
-    def callback(self, widget, data=None):
+    def addClientCallback(self, client=None):
+        print "Adding client %s" % client
+        self.clientList.append([client])
+    
+    def sendCallback(self, widget, data=None):
         text = self.textInputBuffer.get_text(self.textInputBuffer.get_start_iter(),
                                       self.textInputBuffer.get_end_iter(),
                                       include_hidden_chars=False)
@@ -62,7 +71,8 @@ class ClientInterface:
             self.client.interface = self
             
             self.listener = Listener(executioner=self.client,
-                                host=address, port=int(port))
+                                     host=address,
+                                     port=int(port))
             self.listener.start()
             connected = self.client.connect()
             
@@ -166,7 +176,7 @@ class ClientInterface:
         
         # Send button
         self.sendButton = gtk.Button("Send")
-        self.sendButton.connect("clicked", self.callback)
+        self.sendButton.connect("clicked", self.sendCallback)
         self.sendButton.show()
         buttonBox = gtk.HBox(False, 0)
         buttonBox.pack_start(self.sendButton, True, True, 0)
@@ -176,9 +186,8 @@ class ClientInterface:
         self.statusBar = gtk.Statusbar()
         self.statusBar.show()
         self.context_id = self.statusBar.get_context_id("Statusbar")
-
         
-        # Main box
+        # Outer box
         outerBox = gtk.VBox(False, 0)
         outerBox.pack_start(addressBox, True, True, 0)
         outerBox.pack_start(textOutputBox, True, True, 10)
@@ -186,8 +195,26 @@ class ClientInterface:
         outerBox.pack_start(buttonBox, True, True, 10)
         outerBox.pack_start(self.statusBar, True, True, 10)
         outerBox.show()
+
+        # Client list
+        self.clientList = gtk.ListStore(str)
+        listView = gtk.TreeView(self.clientList)
+        listView.set_headers_visible(True)
+        self.cell = gtk.CellRendererText()
+        tvcolumn = gtk.TreeViewColumn("Clients", self.cell, text=0)
+        tvcolumn.set_resizable(True)
+        #tvcolumn.pack_start(self.cell, True)
+        tvcolumn.add_attribute(self.cell, 'text', 0)
+        listView.append_column(tvcolumn)
+        listView.show()
+
+        # Main box
+        mainBox = gtk.HBox(False, 0)
+        mainBox.pack_start(outerBox)
+        mainBox.pack_end(listView)
+        mainBox.show()
         
-        self.window.add(outerBox)
+        self.window.add(mainBox)
         self.window.show()
     
     
