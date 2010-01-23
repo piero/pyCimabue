@@ -97,7 +97,7 @@ class Server(ActiveObject):
         self._requests.task_done()
 
         if msg.wait_for_reply():
-            reply.reply(reply.skt)
+            reply.reply(reply.skt)     
 
 
     def _check_recipient(self, msg):
