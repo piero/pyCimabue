@@ -151,14 +151,14 @@ class Message:
         self.dict2msg(msg_dict)
 
 
-def reply(self, skt):
-    if skt:
-        #self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
-        line = pickle.dumps(self.msg2dict())
-        skt.send(line)
-        #self.logger.debug("[ ] Replied: " + str(self))
-    else:
-        return None
+    def reply(self, skt):
+        if skt:
+            self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
+            line = pickle.dumps(self.msg2dict())
+            skt.send(line)
+            self.logger.debug("[ ] Replied: " + str(self))
+        else:
+            return None
 
 
 # Subclasses (message types)
@@ -206,5 +206,5 @@ class UpdateServerMessage(Message):
     pass
 
 # Client ntification
-class NewServerMessage(Message):
+class NewMasterMessage(Message):
     pass
