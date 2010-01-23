@@ -155,7 +155,7 @@ class BackupStrategy(ServerStrategy):
             if self.__server.get_role() == self.__server.MASTER:
                 notify_client_msg.clientSrc = self.__server.ip          # Our IP
                 notify_client_msg.serverDst = str(self.__server.port)   # Our port
-                notify_client_msg.data = self.__server.get_name()       # Out name
+                notify_client_msg.data = self.__server.get_name()       # Our name
             else:
                 notify_client_msg.clientSrc = self.__server.MASTER      # Master IP
                 notify_client_msg.serverDst = str(self.__master[1][1])  # Master port
