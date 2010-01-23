@@ -7,11 +7,11 @@ import logging
 
 
 class NullHandler(logging.Handler):
-	'''
-	classdocs
-	'''
+    '''
+    classdocs
+    '''
 
 
-	def emit(self, record):
-		pass
-		
+    def emit(self, record):
+        pass
+        

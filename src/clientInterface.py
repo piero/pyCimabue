@@ -22,7 +22,7 @@ gobject.threads_init()
 class ClientInterface:
     
     def addClientCallback(self, client=None):
-        print "Adding client %s" % client
+        print "Added client %s" % client
         self.clientList.append([client])
     
     def sendCallback(self, widget, data=None):

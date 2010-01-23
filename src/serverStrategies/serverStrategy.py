@@ -8,10 +8,10 @@ from message import *
 from utilities.pingAgent import *
 
 class ServerStrategy:
-	
-	def __init__(self, server):
-		self.__server = server
+    
+    def __init__(self, server):
+        self.__server = server
 
 
-	def exit(self):
-		pass
+    def exit(self):
+        pass

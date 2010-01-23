@@ -198,6 +198,7 @@ class Client(ActiveObject):
         for i in client_list:
             if i != self.__name:
                 self.__clients.append(i)
+                # Update the interface, if any
                 if self.interface is not None:
                     self.interface.addClientCallback(i)
         

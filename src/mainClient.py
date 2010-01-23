@@ -26,6 +26,9 @@ class ClientOutput(threading.Thread):
 		self.__running = False
 	
 	
+	def addClientCallback(self, newClient):
+		print "[OUT] Added client %s" % newClient
+	
 	def run(self):
 		self.__running = True
 		
