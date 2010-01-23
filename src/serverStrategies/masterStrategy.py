@@ -12,10 +12,10 @@ class MasterStrategy(ServerStrategy):
     def __init__(self, server, backup=None):
         self.__server = server
         self.name = self.__server.MASTER
-        self.clients = {}            # List of Clients
-        self.servers = {}            # List of Servers: (name, (ip, port))
-        self.servers_ping = {}        # Servers ping timestamps (name, last_ping_ts)
-        self.clients_ping = {}        # Clients ping timestamps (name, last_ping_ts)
+        self.clients = {}           # List of Clients
+        self.servers = {}           # List of Servers: (name, (ip, port))
+        self.servers_ping = {}      # Servers ping timestamps (name, last_ping_ts)
+        self.clients_ping = {}      # Clients ping timestamps (name, last_ping_ts)
         self.servers_lock = threading.Lock()
         self.clients_lock = threading.Lock()
         self.backup = backup

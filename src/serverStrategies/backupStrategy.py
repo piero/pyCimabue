@@ -66,22 +66,28 @@ class BackupStrategy(ServerStrategy):
         # 5) If the list is empty, we become the new Master
         if len(self.__servers) == 0 and self.__master is None:
             self.__server.output("No more candidates: I am the Master", logging.INFO)
-            self.__server.set_role(self.__server.MASTER)
+            self.__master = self.__server
     
-        # 6) Update the Master's Client list
-        if self.sync_client_list() == False:
-            return False
+        # 6) If necessary, update the Master's Client list
+        if self.__master != self.__server:
+            if self.sync_client_list() == False:
+                return False
         
         # 7) Notify connected Clients
         self.__notify_clients()
         
         # 8) If necessary, update the Master's Server list
-        if self.__server.get_role() != self.__server.MASTER:
+        if self.__master != self.__server:
             if self.sync_server_list() == False:
                 return False
         
         # 9) Notify Idle Servers
         self.__notify_servers()
+        
+        # 10) If I shall become the Master, do it
+        if self.__master == self.__server:
+            self.__server.set_role(self.__server.MASTER)
+        
         return True
     
     
@@ -152,12 +158,12 @@ class BackupStrategy(ServerStrategy):
             notify_client_msg.serverSrc = self.__server.get_name()
             notify_client_msg.clientDst = c[0]
             
-            if self.__server.get_role() == self.__server.MASTER:
+            if self.__master == self.__server:
                 notify_client_msg.clientSrc = self.__server.ip          # Our IP
                 notify_client_msg.serverDst = str(self.__server.port)   # Our port
                 notify_client_msg.data = self.__server.get_name()       # Our name
             else:
-                notify_client_msg.clientSrc = self.__server.MASTER      # Master IP
+                notify_client_msg.clientSrc = self.__master[1][0]       # Master IP
                 notify_client_msg.serverDst = str(self.__master[1][1])  # Master port
                 notify_client_msg.data = self.__master[0]               # Master name
             
@@ -178,7 +184,7 @@ class BackupStrategy(ServerStrategy):
             notify_server_msg.serverSrc = self.__server.get_name()
             notify_server_msg.serverDst = s[0]
             
-            if self.__server.get_role() == self.__server.MASTER:
+            if self.__master == self.__server:
                 notify_server_msg.clientSrc = self.__server.ip         # Our IP
                 notify_server_msg.clientDst = str(self.__server.port)  # Our port
                 notify_server_msg.data = self.__server.get_name()      # Our name
