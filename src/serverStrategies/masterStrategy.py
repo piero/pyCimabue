@@ -70,10 +70,18 @@ class MasterStrategy(ServerStrategy):
         
         # Process Ping messages from other servers
         if msg.serverSrc != "":
-            if self.backup != None and msg.serverSrc != self.backup[0] and msg.serverSrc not in self.servers.keys():
+            if self.backup is not None and \
+            msg.serverSrc != self.backup[0] and \
+            msg.serverSrc not in self.servers.keys():
                 self.__server.output("Received Ping from unknown server %s" % msg.serverSrc)
+                
+                # Print Server list (debug)
+                self.__server.output("--> SERVER LIST")
+                for s in self.servers.keys():
+                    self.__server.output("* %s (%s:%d)" % (s, self.servers[s][0], self.servers[s][1]))
+                
                 return ErrorMessage(msg.skt)
-        
+            
             # Update ping list
             self.servers_lock.acquire()
             self.servers_ping[msg.serverSrc] = time.time()
@@ -155,6 +163,21 @@ class MasterStrategy(ServerStrategy):
     
     def _process_SyncClientListMessage(self, msg):
         self.__server.output("Processing SyncClientListMessage")
+        c_name = pickle.loads(msg.data)
+        c_ip = pickle.loads(msg.clientSrc)
+        c_port = pickle.loads(msg.clientDst)
+        
+        self.clients_lock.acquire()
+        self.clients.clear()
+        
+        for i in range(len(c_name)):
+            self.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
+        self.clients_lock.release()
+        
+        # Print Client list (debug)
+        self.__server.output("CLIENT LIST")
+        for c in self.clients.keys():
+            self.__server.output("%s (%s:%d)" % (c, self.clients[c][0], self.clients[c][1]))
         
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -164,6 +187,21 @@ class MasterStrategy(ServerStrategy):
     
     def _process_SyncServerListMessage(self, msg):
         self.__server.output("Processing SyncServerListMessage")
+        s_name = pickle.loads(msg.data)
+        s_ip = pickle.loads(msg.clientSrc)
+        s_port = pickle.loads(msg.clientDst)
+        
+        self.servers_lock.acquire()
+        self.servers.clear()
+        
+        for i in range(len(s_name)):
+            self.servers[s_name[i]] = (s_ip[i], int(s_port[i]))
+        self.servers_lock.release()
+        
+        # Print Server list (debug)
+        self.__server.output("SERVER LIST")
+        for s in self.servers.keys():
+            self.__server.output("%s (%s:%d)" % (s, self.servers[s][0], self.servers[s][1]))
         
         reply = SyncServerListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()

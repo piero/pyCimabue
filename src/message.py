@@ -156,7 +156,7 @@ class Message:
             self.logger.debug("[%s] Replying on socket %d" % (self.type, skt.fileno()))
             line = pickle.dumps(self.msg2dict())
             skt.send(line)
-            self.logger.debug("[ ] Replied: " + str(self))
+            #self.logger.debug("[ ] Replied: " + str(self))
         else:
             return None
 
@@ -202,9 +202,5 @@ class BecomeMasterMessage(Message):
 class BecomeBackupMessage(Message):
     pass
 
-class UpdateServerMessage(Message):
-    pass
-
-# Client ntification
 class NewMasterMessage(Message):
     pass

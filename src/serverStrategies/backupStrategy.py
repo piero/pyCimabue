@@ -174,7 +174,7 @@ class BackupStrategy(ServerStrategy):
     
     def __notify_servers(self):
         for s in self.__servers.keys():
-            notify_server_msg = UpdateServerMessage(priority=0)
+            notify_server_msg = NewMasterMessage(priority=0)
             notify_server_msg.serverSrc = self.__server.get_name()
             notify_server_msg.serverDst = s[0]
             
@@ -284,7 +284,7 @@ class BackupStrategy(ServerStrategy):
         for c in self.__clients.keys():
             self.__server.output("%s (%s:%d)" % (c, self.__clients[c][0], self.__clients[c][1]))
         
-        reply = Message(msg.skt, msg.priority)
+        reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
         reply.serverDst = msg.serverSrc
         return reply
