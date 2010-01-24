@@ -12,6 +12,10 @@ from Queue import PriorityQueue, Empty, Full
 
 class ActiveObject(threading.Thread):
 
+    # Request types
+    LOCAL_REQUEST = 0
+    REMOTE_REQUEST = 1 
+
     def __init__(self):
         threading.Thread.__init__(self)
         self._requests = PriorityQueue()
@@ -28,9 +32,9 @@ class ActiveObject(threading.Thread):
         self.logger.addHandler(h)
 
 
-    def add_request(self, msg, address):
+    def add_request(self, msg, type):
         if msg.priority >= 0:
-            self._requests.put((msg.priority, (msg, address)))
+            self._requests.put((msg.priority, (msg, type)))
         else:
             self.output(("[!] Request ignored: wrong priority (%d)" % msg.priority), logging.WARNING)
 
@@ -38,7 +42,7 @@ class ActiveObject(threading.Thread):
     def _get_next_request(self):
         try:
             # Wait until a request is available
-            request = self._requests.get(block = True, timeout = 1.0)
+            request = self._requests.get(block=True, timeout=1.0)
             return request
         except Empty:
             pass
@@ -50,7 +54,7 @@ class ActiveObject(threading.Thread):
     
 
     def run(self):
-        while self._running == True:
+        while self._running:
             req = self._get_next_request()
             if req:
                 self._process_request(req[1][0], req[1][1])

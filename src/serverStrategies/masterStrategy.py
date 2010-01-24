@@ -37,6 +37,12 @@ class MasterStrategy(ServerStrategy):
                 
         c_names = self.sync_client_list(except_client=msg.clientSrc)
         
+        if self.backup is not None:
+            # Schedule an update of Backup's client list
+            task = Message(priority=0)
+            task.data = 'sync_backup_client_list'
+            self.__server.add_request(task, self.__server.LOCAL_REQUEST)
+        
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.clientDst = msg.clientSrc
         reply.serverSrc = self.__server.get_name()
@@ -198,7 +204,7 @@ class MasterStrategy(ServerStrategy):
     
 
     def sync_server_list(self):
-        msg = SyncServerListMessage(priority=0)
+        msg = SyncServerListMessage(priority=0, wait_for_reply=False)
         msg.serverSrc = self.__server.get_name()
         msg.serverDst = self.backup[0]
         
@@ -247,9 +253,23 @@ class MasterStrategy(ServerStrategy):
                     self.__server.output("[!] Error synchronizing client list on %s" % c)
                     self.__server.output(">>> %s" % client_update.data)
         self.clients_lock.release()
+        return c_names
+    
+    def sync_backup_client_list(self):
+        self.__server.output("[i] Updating Backup's client list...")
 
-        # Notify the Backup Server
         if self.backup is not None:
+            c_names = []
+            c_ip = []
+            c_port = []
+            
+            self.clients_lock.acquire()
+            for c in self.clients.keys():
+                c_names.append(c)
+                c_ip.append(self.clients[c][0])
+                c_port.append(self.clients[c][1])
+            self.clients_lock.release()
+            
             self.__server.output("[i] Updating clients on Backup Server %s..." % self.backup[0])
             backup_update = SyncClientListMessage(priority=0)
             backup_update.serverSrc = self.__server.get_name()
@@ -259,11 +279,10 @@ class MasterStrategy(ServerStrategy):
             backup_update.data = pickle.dumps(c_names)
         
             reply = backup_update.send(self.backup[1], self.backup[2])
-            if reply is None or reply.type == ErrorMessage:
+            if reply is None or reply.type == 'ErrorMessage':
                 self.__server.output("[!] Error synchronizing client list on Backup Server")
-        
-        return c_names
-    
+                self.__server.output(">>> %s" % backup_update.data)
+
 
     def __forward_message(self, dest_client, msg):
         self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_client[0], dest_client[1]))

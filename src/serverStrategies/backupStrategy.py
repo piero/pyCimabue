@@ -116,6 +116,7 @@ class BackupStrategy(ServerStrategy):
         
         if reply is None or reply == ErrorMessage:
             self.__server.output("[!] Error synchronizing client list on Master")
+            self.__server.output(">>> %s" % master_update.data)
             return False
         else:
             return True
@@ -146,6 +147,7 @@ class BackupStrategy(ServerStrategy):
         
         if reply is None or reply == ErrorMessage:
             self.__server.output("[!] Error synchronizing server list on Master")
+            self.__server.output(">>> %s" % master_update.data)
             return False
         else:
             return True
@@ -174,6 +176,7 @@ class BackupStrategy(ServerStrategy):
             if reply is None or reply == ErrorMessage:
                 self.__server.output("Error notifying client %s (%s:%d)" %
                                      (c, client[0], client[1]), logging.ERROR)
+                self.__server.output(">>> %s" % notify_client_msg.data)
                 del self.__clients[c[0]]
         self.__clients_lock.release()
     
@@ -199,7 +202,9 @@ class BackupStrategy(ServerStrategy):
             
             if reply is None or reply == ErrorMessage:
                 self.__server.output("Error notifying server %s (%s:%d)" %
-                                     (s, srv[0], srv[1]), logging.ERROR)
+                                     (s, srv[0], srv[1]),
+                                     logging.ERROR)
+                self.__server.output(">>> %s" % notify_server_msg.data)
     
     
     def _process_ConnectMessage(self, msg):

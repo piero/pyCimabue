@@ -132,7 +132,7 @@ class Listener(threading.Thread):
                             msg = Message(skt)
                             msg_dict = pickle.loads(data)
                             msg.dict2msg(msg_dict)
-                            self.__executioner.add_request(msg, address)
+                            self.__executioner.add_request(msg, self.__executioner.REMOTE_REQUEST)
                             
                         except KeyError:
                             pass

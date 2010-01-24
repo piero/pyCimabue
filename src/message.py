@@ -23,7 +23,7 @@ class Message:
         self.__wait_for_reply = wait_for_reply
         self.__use_external_socket = False
         self.__MAX_SIZE = 2048
-        self.__RECV_TIMEOUT = 10
+        self.__RECV_TIMEOUT = 5
 
         # Logging
         logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')

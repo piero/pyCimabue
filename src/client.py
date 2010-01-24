@@ -95,7 +95,7 @@ class Client(ActiveObject):
         return reply
     
 
-    def _process_request(self, msg, address):
+    def _process_request(self, msg, type):
         # Dynamically call the proper function
         try:
             process_function_name = "_process_" + msg.type
@@ -182,7 +182,7 @@ class Client(ActiveObject):
             return False
 
         # Send 'Hello' message
-        msg = ConnectMessage(use_socket=self.skt, priority=0)
+        msg = ConnectMessage(use_socket=self.skt, priority=1)
         msg.clientSrc = self.__name         # Our Name
         msg.serverDst = self.ip             # Our IP address
         msg.data = str(self.port)           # Our Port
@@ -207,7 +207,6 @@ class Client(ActiveObject):
                 c_names = pickle.loads(reply.data)
                 self.__update_client_list(c_names)
                 self.__connected = True
-        
             return True
             
     

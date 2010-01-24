@@ -77,14 +77,23 @@ class Server(ActiveObject):
         return self.__name
     
 
-    def _process_request(self, msg, address):
-        #self.output("REQUEST: %s" % str(msg))
+    def _process_request(self, msg, type):
+        process_function = None
+        process_function_name = None
         
         # Dynamically call the proper function
         try:
-            process_function_name = "_process_" + msg.type
-            process_function = getattr(self.__strategy, process_function_name)
-        
+            if type == self.LOCAL_REQUEST:
+                self.output("PROCESSING %s..." % msg.data, logging.DEBUG)
+                process_function = getattr(self.__strategy, msg.data)
+                    
+            elif type == self.REMOTE_REQUEST:
+                process_function_name = "_process_" + msg.type
+                process_function = getattr(self.__strategy, process_function_name)
+                
+            else:
+                self.output("Invalid request type: %d" % type, logging.ERROR)
+            
         except AttributeError:
             self.output("AttributeError (%s.%s)" % (self.__strategy.name, process_function_name), logging.ERROR)
             reply = ErrorMessage(msg.skt, msg.priority)
@@ -93,11 +102,19 @@ class Server(ActiveObject):
             reply.data = "Unknown message type: " + msg.type
             self._requests.task_done()
         
-        reply = process_function(msg)
+        # Execute the request
+        if process_function is not None:
+            if type == self.LOCAL_REQUEST:
+                process_function()
+            elif type == self.REMOTE_REQUEST:
+                reply = process_function(msg)
+                if msg.wait_for_reply():
+                    reply.reply(reply.skt)
+            else:
+                self.output("Invalid request type: %d" % type, logging.ERROR)
+        
+        # We're done
         self._requests.task_done()
-
-        if msg.wait_for_reply():
-            reply.reply(reply.skt)     
 
 
     def _check_recipient(self, msg):
