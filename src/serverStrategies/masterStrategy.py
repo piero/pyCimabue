@@ -63,11 +63,13 @@ class MasterStrategy(ServerStrategy):
             reply.data = "Destination not found: " + msg.clientDst
         self.clients_lock.release()
         
+        if reply is None:
+            reply = ErrorMessage(priority=msg.priority)
+            reply.data = "Error sending message"
+        
         reply.serverSrc = self.__server.get_name()
         reply.clientDst = msg.clientSrc
-        
-        # Use the same socket for the reply
-        reply.skt = msg.skt
+        reply.skt = msg.skt     # Reuse the socket
         return reply
 
     
@@ -230,22 +232,20 @@ class MasterStrategy(ServerStrategy):
         c_ip = []
         c_port = []
         
+        # Make the clients' list
         self.clients_lock.acquire()
         for c in self.clients.keys():
             c_names.append(c)
             c_ip.append(self.clients[c][0])
             c_port.append(self.clients[c][1])
-        self.clients_lock.release()
         
-        # Notify the other clients
-        client_update = SyncClientListMessage(priority=0)
-        client_update.serverSrc = self.__server.get_name()
-        client_update.data = pickle.dumps(c_names)
-        
-        self.clients_lock.acquire()
+        # Notify the clients
         for c in self.clients.keys():
             if c != except_client:
                 self.__server.output("[i] Updating %s's client list..." % c)
+                client_update = SyncClientListMessage(priority=0)
+                client_update.serverSrc = self.__server.get_name()
+                client_update.data = pickle.dumps(c_names)
                 client_update.clientDst = c
                 
                 reply = client_update.send(self.clients[c][0], self.clients[c][1])
@@ -256,8 +256,6 @@ class MasterStrategy(ServerStrategy):
         return c_names
     
     def sync_backup_client_list(self):
-        self.__server.output("[i] Updating Backup's client list...")
-
         if self.backup is not None:
             c_names = []
             c_ip = []
@@ -285,7 +283,10 @@ class MasterStrategy(ServerStrategy):
 
 
     def __forward_message(self, dest_client, msg):
-        self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc, dest_client[0], dest_client[1]))
+        self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc,
+                                                               dest_client[0],
+                                                               dest_client[1]),
+                                                               logging.DEBUG)
         
         fwd_msg = SendMessage()
         fwd_msg.clientSrc = msg.clientSrc
@@ -295,8 +296,10 @@ class MasterStrategy(ServerStrategy):
 
         reply = fwd_msg.send(dest_client[0], dest_client[1])
         
-        if reply is None:
-            return fwd_msg
-        else:
-            return reply
+        if reply is None or reply.type == 'ErrorMessage':
+            self.__server.output("Couldn't forward message to %s (%s:%d)" % (msg.clientDst,
+                                                                             dest_client[0],
+                                                                             dest_client[1]),
+                                                                             logging.ERROR)    
+        return reply
     
