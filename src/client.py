@@ -60,6 +60,7 @@ class Client(ActiveObject):
         
         else:
             self.output("Connected to %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port))
+            self.interface.set_status("Connected to %s" % self.server_name)
             
             # Start the Ping Agent
             self.__ping_agent = PingAgent(caller=self, run_as_server=False)
@@ -155,6 +156,8 @@ class Client(ActiveObject):
                                                    self.server_ip,
                                                    self.server_port)),
                                                    logging.INFO)
+        
+        self.interface.set_status("Connected to %s" % self.server_name)
         
         reply = NewMasterMessage(msg.skt, msg.priority)
         reply.clientSrc = self.__name

@@ -93,7 +93,6 @@ class ClientInterface:
             connected = self.client.connect()
             
             if connected:
-                self.set_status("Connected to server")
                 self.window.set_title("Client [%s]" % self.client.get_name())
             else:
                 self.set_status("ERROR: No server found")
@@ -153,7 +152,7 @@ class ClientInterface:
         self.textOutputBuffer = textOutput.get_buffer()
         
         # Text output label
-        textOutputLabel = gtk.Label("Received")
+        textOutputLabel = gtk.Label("Conversation")
         textOutputLabel.show()
         
         # Text output scroll
@@ -169,7 +168,7 @@ class ClientInterface:
         textOutputBox.show()
         
         # Text input label
-        textInputLabel = gtk.Label("Send")
+        textInputLabel = gtk.Label("Message to send")
         textInputLabel.show()
         
         # Text input field
