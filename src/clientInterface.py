@@ -34,9 +34,22 @@ class ClientInterface:
         # Delete text from the input box
         self.textInputBuffer.set_text('')
         
-        print "Writing: %s" % text
-        iter = self.textOutputBuffer.get_end_iter()
-        self.textOutputBuffer.insert(iter, "%s\n" % text)
+        destination = None
+        reply = None
+        
+        if len(self.clientList) > 0:
+            (model, model_iter) = self.listView.get_selection().get_selected()
+            destination = model.get(model_iter, 0)
+            print "Sending \"%s\" to  %s" % (text, destination[0])
+        
+        if destination is not None:
+            reply = self.client.send_message(destination[0], text)
+        
+        if reply is not None:
+            self.print_message("Message sent")
+        #print "Writing: %s" % text
+        #iter = self.textOutputBuffer.get_end_iter()
+        #self.textOutputBuffer.insert(iter, "%s\n" % text)
     
     
     def delete_event(self, widget, event, data=None):
@@ -200,20 +213,21 @@ class ClientInterface:
 
         # Client list
         self.clientList = gtk.ListStore(str)
-        listView = gtk.TreeView(self.clientList)
-        listView.set_headers_visible(True)
+        self.listView = gtk.TreeView(self.clientList)
+        self.listView.set_headers_visible(True)
+        self.listView.get_selection().set_mode(gtk.SELECTION_SINGLE)
         self.cell = gtk.CellRendererText()
         tvcolumn = gtk.TreeViewColumn("Clients", self.cell, text=0)
         tvcolumn.set_resizable(True)
         #tvcolumn.pack_start(self.cell, True)
         tvcolumn.add_attribute(self.cell, 'text', 0)
-        listView.append_column(tvcolumn)
-        listView.show()
+        self.listView.append_column(tvcolumn)
+        self.listView.show()
 
         # Main box
         mainBox = gtk.HBox(False, 0)
         mainBox.pack_start(outerBox)
-        mainBox.pack_end(listView)
+        mainBox.pack_end(self.listView)
         mainBox.show()
         
         self.window.add(mainBox)

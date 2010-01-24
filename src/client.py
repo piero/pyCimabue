@@ -72,15 +72,17 @@ class Client(ActiveObject):
             self.interface.print_message("Destination %s doesn't exists" % destination)
             return None
         
+        self.output(("Sending \"%s\" to %s" % (message, destination)), logging.DEBUG)
+        
         # Create the message to send
-        msg = SendMessage(self.skt)
+        msg = SendMessage()
         msg.clientSrc = self.__name
         msg.clientDst = destination
         msg.serverDst = self.server_name
         msg.data = message
         
         # Send the message
-        reply = msg.send()
+        reply = msg.send(self.server_ip, self.server_port)
         if reply is None:
             if self.interface is not None:
                 self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
