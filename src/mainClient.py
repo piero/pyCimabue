@@ -21,6 +21,8 @@ class ClientOutput(threading.Thread):
 	def print_message(self, msg):
 		print "[OUT] %s" % msg
 
+	def set_status(self, msg):
+		print "[OUT - Status] %s" % msg
 
 	def stop(self):
 		self.__running = False

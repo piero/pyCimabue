@@ -23,7 +23,7 @@ class Message:
         self.__wait_for_reply = wait_for_reply
         self.__use_external_socket = False
         self.__MAX_SIZE = 2048
-        self.__RECV_TIMEOUT = 5
+        self.__RECV_TIMEOUT = 10
 
         # Logging
         logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -114,7 +114,7 @@ class Message:
             except socket.timeout, message:
                 if self.skt:
                     self.skt.close()
-                self.logger.error("[!] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
+                self.logger.error("[TIMEOUT] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
                 self.type = ErrorMessage
                 self.data = str(message)
                 return None
@@ -122,7 +122,7 @@ class Message:
             except socket.error, (value, message):
                 if self.skt:
                     self.skt.close()
-                self.logger.error("[!] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
+                self.logger.error("[ERROR] Message.send(%s:%d): %s" % (dstAddress, dstPort, str(message)))
                 self.type = ErrorMessage
                 self.data = str(message)
                 return None

@@ -15,8 +15,8 @@ class PingAgent(threading.Thread):
         threading.Thread.__init__(self)
         self.__caller = caller
         self.__interval = interval
-        self.__SERVER_TIMEOUT = 5.0
-        self.__CLIENT_TIMEOUT = 5.0
+        self.__SERVER_TIMEOUT = 10.0
+        self.__CLIENT_TIMEOUT = 10.0
         self.__is_server = run_as_server
         self.__running = False
         if self.__is_server:

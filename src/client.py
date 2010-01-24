@@ -68,21 +68,25 @@ class Client(ActiveObject):
     
     
     def send_message(self, destination, message):
+        if not self.__connected or self.skt is None:
+            self.interface.set_status("Not connected to server")
+            return None 
+        
         if destination not in self.__clients:
-            self.interface.print_message("Destination %s doesn't exists" % destination)
+            self.interface.set_status("Destination %s doesn't exists" % destination)
             return None
         
         self.output(("Sending \"%s\" to %s" % (message, destination)), logging.DEBUG)
         
         # Create the message to send
-        msg = SendMessage()
+        msg = SendMessage(use_socket=self.skt)
         msg.clientSrc = self.__name
         msg.clientDst = destination
         msg.serverDst = self.server_name
         msg.data = message
         
         # Send the message
-        reply = msg.send(self.server_ip, self.server_port)
+        reply = msg.send()
         if reply is None:
             if self.interface is not None:
                 self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
@@ -147,7 +151,10 @@ class Client(ActiveObject):
         self.server_ip = msg.clientSrc
         self.server_port = int(msg.serverDst)
         
-        self.output(("New Master is %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port)), logging.INFO)
+        self.output(("New Master is %s (%s:%d)" % (self.server_name,
+                                                   self.server_ip,
+                                                   self.server_port)),
+                                                   logging.INFO)
         
         reply = NewMasterMessage(msg.skt, msg.priority)
         reply.clientSrc = self.__name
@@ -156,41 +163,50 @@ class Client(ActiveObject):
     
     
     def connect_to_server(self, server_ip, server_port):
-        # Look for the Master Server
+        if self.skt is not None:
+            # Close previous socket
+            self.skt.close()
+            self.skt = None
+        
+        # Create a new socket and try connecting
         self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.skt.connect((server_ip, server_port))
         except socket.error:
-            if self.skt: self.skt.close()
+            if self.skt:
+                self.skt.close()
+                self.skt = None
             return False
 
         # Send 'Hello' message
-        msg = ConnectMessage(self.skt, priority=0)
-        msg.clientSrc = self.__name            # Our Name
-        msg.serverDst = self.ip                # Our IP address
-        msg.data = str(self.port)            # Our Port
+        msg = ConnectMessage(use_socket=self.skt, priority=0)
+        msg.clientSrc = self.__name         # Our Name
+        msg.serverDst = self.ip             # Our IP address
+        msg.data = str(self.port)           # Our Port
         reply = msg.send()
         
-        if reply is not None:
-            self.__connected = True
-            if self.skt: self.skt.close()
-
-            if reply.type != "SyncClientListMessage":
-                self.output("Oops, wrong server!", logging.WARNING)
-                return False    # Oops, it wasn't the Master Server
+        if reply is not None and reply.type != 'SyncClientListMessage':
+            # Oops, it wasn't the Master Server
+            self.output("Oops, wrong server!", logging.WARNING)
+            if self.skt:
+                self.skt.close()
+                self.skt = None
+            return False
             
-            else:
-                self.server_ip = server_ip
-                self.server_port = server_port
-                self.server_name = reply.serverSrc
-                
-                # Update clients list
-                if reply.data is not None:
-                    c_names = pickle.loads(reply.data)
-                    self.__update_client_list(c_names)
+        else:
+            # We found the Master Server
+            self.server_ip = server_ip
+            self.server_port = server_port
+            self.server_name = reply.serverSrc
+            
+            # Update clients list
+            if reply.data is not None:
+                c_names = pickle.loads(reply.data)
+                self.__update_client_list(c_names)
+                self.__connected = True
         
-        return True
-    
+            return True
+            
     
     def __update_client_list(self, client_list):
         # Clear the clients list

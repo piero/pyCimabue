@@ -34,23 +34,24 @@ class ClientInterface:
         # Delete text from the input box
         self.textInputBuffer.set_text('')
         
+        # Ignore empty text 
+        if text == '':
+            return
+        
         destination = None
         reply = None
         
         if len(self.clientList) > 0:
             (model, model_iter) = self.listView.get_selection().get_selected()
-            destination = model.get(model_iter, 0)
-            print "Sending \"%s\" to  %s" % (text, destination[0])
+            destination = model.get(model_iter, 0)[0]
+            print "Sending \"%s\" to  %s" % (text, destination)
         
         if destination is not None:
-            reply = self.client.send_message(destination[0], text)
+            reply = self.client.send_message(destination, text)
         
         if reply is not None:
-            self.print_message("Message sent")
-        #print "Writing: %s" % text
-        #iter = self.textOutputBuffer.get_end_iter()
-        #self.textOutputBuffer.insert(iter, "%s\n" % text)
-    
+            self.print_message("> %s: %s" % (destination, text))
+
     
     def delete_event(self, widget, event, data=None):
         print "Bye :)"
@@ -93,6 +94,7 @@ class ClientInterface:
             
             if connected:
                 self.set_status("Connected to server")
+                self.window.set_title("Client [%s]" % self.client.get_name())
             else:
                 self.set_status("ERROR: No server found")
                 self.__destroy_client()
@@ -231,6 +233,7 @@ class ClientInterface:
         mainBox.show()
         
         self.window.add(mainBox)
+        self.window.set_title("Client [Not connected]")
         self.window.show()
     
     
