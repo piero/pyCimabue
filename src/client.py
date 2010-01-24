@@ -194,6 +194,9 @@ class Client(ActiveObject):
         # Clear the clients list
         while len(self.__clients):
             self.__clients.pop()
+            # Update the interface
+            if self.interface is not None:
+                self.interface.clearClientListCallback()
         
         for i in client_list:
             if i != self.__name:

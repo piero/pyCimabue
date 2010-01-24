@@ -28,6 +28,9 @@ class ClientOutput(threading.Thread):
 	
 	def addClientCallback(self, newClient):
 		print "[OUT] Added client %s" % newClient
+		
+	def clearClientListCallback(self):
+		pass
 	
 	def run(self):
 		self.__running = True

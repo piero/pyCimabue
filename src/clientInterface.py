@@ -24,6 +24,10 @@ class ClientInterface:
     def addClientCallback(self, client=None):
         print "Added client %s" % client
         self.clientList.append([client])
+        
+    def clearClientListCallback(self):
+        print "Clear client list"
+        self.clientList.clear()
     
     def sendCallback(self, widget, data=None):
         text = self.textInputBuffer.get_text(self.textInputBuffer.get_start_iter(),
