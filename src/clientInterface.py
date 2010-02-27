@@ -13,7 +13,7 @@ import gtk
 import gobject
 import threading
 from listener import *
-from client import *
+from clientProxy import *
 
 # Allow other threads to run
 gobject.threads_init()
