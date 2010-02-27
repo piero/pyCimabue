@@ -7,7 +7,7 @@ Created on 25/ott/2009
 '''
 
 from listener import *
-from client import *
+from clientProxy import *
 import sys
 
 
@@ -95,10 +95,10 @@ if __name__=="__main__":
 		print 'Usage:', sys.argv[0], 'ip port'
 		sys.exit(1)
 	
-	client = Client(sys.argv[1], int(sys.argv[2]))
+	client = ClientProxy(sys.argv[1], int(sys.argv[2]))
 	client.logger.setLevel(logging.DEBUG)
 	
-	# Client output interface
+	# ClientProxy output interface
 	client_output = ClientOutput()
 	client.interface = client_output
 	client.interface.start()
@@ -108,7 +108,7 @@ if __name__=="__main__":
 	listener.start()
 	client.connect()
 	
-	# Client input interface
+	# ClientProxy input interface
 	client_input = ClientInput(client)
 	client_input.start()
 	

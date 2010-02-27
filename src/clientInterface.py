@@ -82,7 +82,7 @@ class ClientInterface:
             self.set_status("ERROR: Invalid address or port")
         else:
             print "Creating new client %s:%s..." % (address, port)
-            self.client = Client(address, int(port))
+            self.client = ClientProxy(address, int(port))
             self.client.logger.setLevel(logging.DEBUG)
             self.client.interface = self
             
@@ -93,7 +93,7 @@ class ClientInterface:
             connected = self.client.connect()
             
             if connected:
-                self.window.set_title("Client [%s]" % self.client.get_name())
+                self.window.set_title("ClientProxy [%s]" % self.client.get_name())
             else:
                 self.set_status("ERROR: No server found")
                 self.__destroy_client()
@@ -212,7 +212,7 @@ class ClientInterface:
         outerBox.pack_start(self.statusBar, True, True, 10)
         outerBox.show()
 
-        # Client list
+        # ClientProxy list
         self.clientList = gtk.ListStore(str)
         self.listView = gtk.TreeView(self.clientList)
         self.listView.set_headers_visible(True)
@@ -232,7 +232,7 @@ class ClientInterface:
         mainBox.show()
         
         self.window.add(mainBox)
-        self.window.set_title("Client [Not connected]")
+        self.window.set_title("ClientProxy [Not connected]")
         self.window.show()
     
     

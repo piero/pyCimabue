@@ -10,7 +10,7 @@ from utilities.pingAgent import *
 import time
 
 
-class Client(ActiveObject):
+class ClientProxy(ActiveObject):
     
     def __init__(self, ip, port):
         ActiveObject.__init__(self)
@@ -33,7 +33,7 @@ class Client(ActiveObject):
         if self.__ping_agent is not None:
             self.__ping_agent.stop()
             self.__ping_agent.join(2.0)
-        self.output("[x] Client", logging.INFO)
+        self.output("[x] ClientProxy", logging.INFO)
     
     
     def get_name(self):
@@ -225,7 +225,7 @@ class Client(ActiveObject):
                 if self.interface is not None:
                     self.interface.addClientCallback(i)
         
-        # Print Client list (debug)
+        # Print ClientProxy list (debug)
         self.output("CLIENT LIST (%d clients except me)" % len(self.__clients))
         for c in self.__clients:
             self.output("%s" % c)
