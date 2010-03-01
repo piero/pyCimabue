@@ -88,8 +88,8 @@ class Message:
     def send(self, dstAddress=None, dstPort=None):
         if self.__use_external_socket == False:
             try:
-                #self.logger.debug("[MSG] Creating internal socket")
                 self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                #self.logger.debug("[MSG] Created internal socket: %d" % self.skt.fileno())
                 self.skt.connect((dstAddress, dstPort))
     
             except socket.error, (value, message):

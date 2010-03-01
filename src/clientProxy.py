@@ -50,7 +50,7 @@ class ClientProxy(ActiveObject):
         self.__connected = False
         
         for i in range(len(output_list)):
-            self.output("Connecting to %s:%s..." % (output_list[i][0], output_list[i][1]))    
+            self.output("Connecting to %s:%s..." % (output_list[i][0], output_list[i][1]))
             if self.connect_to_server(output_list[i][0], int(output_list[i][1])):
                 break
         
@@ -80,14 +80,14 @@ class ClientProxy(ActiveObject):
         self.output(("Sending \"%s\" to %s" % (message, destination)), logging.DEBUG)
         
         # Create the message to send
-        msg = SendMessage(use_socket=self.skt)
+        msg = SendMessage()
         msg.clientSrc = self.__name
         msg.clientDst = destination
         msg.serverDst = self.server_name
         msg.data = message
         
         # Send the message
-        reply = msg.send()
+        reply = msg.send(self.server_ip, self.server_port)
         if reply is None:
             if self.interface is not None:
                 self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
@@ -119,6 +119,9 @@ class ClientProxy(ActiveObject):
         
         if self.interface is not None:
             self.interface.print_message("%s: %s" % (msg.clientSrc, msg.data))
+        
+        if msg.skt is None:
+            return None
         
         reply = Message(msg.skt, msg.priority)
         reply.clientSrc = self.__name
