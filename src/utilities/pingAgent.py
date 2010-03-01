@@ -51,14 +51,14 @@ class PingAgent(threading.Thread):
 
     def __run_as_master(self):
         # Check other servers
-        self.__caller.get_role().servers_lock.acquire()
-        for k in self.__caller.get_role().servers_ping.keys():
-            if (time.time() - self.__caller.get_role().servers_ping[k] > self.__SERVER_TIMEOUT):
-                del self.__caller.get_role().servers_ping[k]
+        self.__caller.servers_lock.acquire()
+        for k in self.__caller.servers_ping.keys():
+            if (time.time() - self.__caller.servers_ping[k] > self.__SERVER_TIMEOUT):
+                del self.__caller.servers_ping[k]
                 
                 if self.__caller.get_role().backup != None and k != self.__caller.get_role().backup[0]:
-                    del self.__caller.get_role().servers[k]
-                    self.__caller.output("[-] Removed %s (%d servers left)" % (k, len(self.__caller.get_role().servers)),
+                    del self.__caller.servers[k]
+                    self.__caller.output("[-] Removed %s (%d servers left)" % (k, len(self.__caller.servers)),
                                         logging.WARNING)
                     self.__caller.get_role().sync_server_list()
                 
@@ -67,29 +67,29 @@ class PingAgent(threading.Thread):
                     self.__caller.get_role().backup = None
                     self.__caller.output("[!] Backup Server left (%s)!" % k, logging.WARNING)
                     # TODO: Start Backup rescue procedure!
-        self.__caller.get_role().servers_lock.release()
+        self.__caller.servers_lock.release()
                 
         # Check clients
-        self.__caller.get_role().clients_lock.acquire()
+        self.__caller.clients_lock.acquire()
         
         try:
-            for k in self.__caller.get_role().clients_ping.keys():
-                if (time.time() - self.__caller.get_role().clients_ping[k] > self.__CLIENT_TIMEOUT):
-                    del self.__caller.get_role().clients_ping[k]
-                    del self.__caller.get_role().clients[k]
-                    self.__caller.output("[-] Removed %s (%d clients left)" % (k, len(self.__caller.get_role().clients)),
+            for k in self.__caller.clients_ping.keys():
+                if (time.time() - self.__caller.clients_ping[k] > self.__CLIENT_TIMEOUT):
+                    del self.__caller.clients_ping[k]
+                    del self.__caller.clients[k]
+                    self.__caller.output("[-] Removed %s (%d clients left)" % (k, len(self.__caller.clients)),
                                             logging.WARNING)
                     
-                    self.__caller.get_role().clients_lock.release()
+                    self.__caller.clients_lock.release()
                     self.__caller.get_role().sync_client_list()
                     self.__caller.get_role().sync_backup_client_list()
-                    self.__caller.get_role().clients_lock.acquire()
+                    self.__caller.clients_lock.acquire()
         
         except KeyError:
             pass
         
         finally:    
-            self.__caller.get_role().clients_lock.release()
+            self.__caller.clients_lock.release()
 
     
     def __run_as_slave(self):

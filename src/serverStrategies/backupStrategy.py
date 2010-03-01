@@ -13,10 +13,6 @@ class BackupStrategy(ServerStrategy):
         self.__server = server
         self.name = self.__server.BACKUP
         self.__master = master
-        self.__servers = {}
-        self.__clients = {}
-        self.__servers_lock = threading.Lock()
-        self.__clients_lock = threading.Lock()
         self.__server.output("Behaviour: %s" % self.name)
         if self.__master != None:
             self.__server.output("(master: %s)" % self.__master[0])
@@ -30,11 +26,11 @@ class BackupStrategy(ServerStrategy):
         self.__server.output("Electing a new Master...", logging.INFO)
         self.__master = None
         
-        self.__servers_lock.acquire()
+        self.__server.servers_lock.acquire()
         
-        while len(self.__servers) > 0:
+        while len(self.__server.servers) > 0:
             # 1) Get a candidate
-            curr = self.__servers.iteritems()
+            curr = self.__server.servers.iteritems()
             candidate = curr.next()
             self.__server.output(("Candidate: [%s] %s:%d" % (candidate[0], candidate[1][0], candidate[1][1])), logging.INFO)
         
@@ -48,7 +44,7 @@ class BackupStrategy(ServerStrategy):
             
             # 3) If successful, we can break the loop
             if reply is not None and reply.type != ErrorMessage:
-                del self.__servers[candidate[0]]    # Remove the new Master from the Servers list
+                del self.__server.servers[candidate[0]]    # Remove the new Master from the Servers list
                 self.__master = candidate           # and set it as our Master
                 self.__server.output("New Master is %s (%s:%d)" % (self.__master[0],
                                                         self.__master[1][0],
@@ -59,12 +55,12 @@ class BackupStrategy(ServerStrategy):
             # 4) Else remove the Server from our Servers list and try another one
             else:
                 self.__server.output("Candidate %s is down" % candidate[0])
-                del self.__servers[candidate[0]]
+                del self.__server.servers[candidate[0]]
         
-        self.__servers_lock.release()
+        self.__server.servers_lock.release()
         
         # 5) If the list is empty, we become the new Master
-        if len(self.__servers) == 0 and self.__master is None:
+        if len(self.__server.servers) == 0 and self.__master is None:
             self.__server.output("No more candidates: I am the Master", logging.INFO)
             self.__master = self.__server
     
@@ -99,12 +95,12 @@ class BackupStrategy(ServerStrategy):
         c_ip = []
         c_port = []
         
-        self.__clients_lock.acquire()
-        for c in self.__clients.keys():
+        self.__server.clients_lock.acquire()
+        for c in self.__server.clients.keys():
             c_names.append(c)
-            c_ip.append(self.__clients[c][0])
-            c_port.append(self.__clients[c][1])
-        self.__clients_lock.release()
+            c_ip.append(self.__server.clients[c][0])
+            c_port.append(self.__server.clients[c][1])
+        self.__server.clients_lock.release()
         
         master_update = SyncClientListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
@@ -130,12 +126,12 @@ class BackupStrategy(ServerStrategy):
         s_ip = []
         s_port = []
         
-        self.__servers_lock.acquire()
-        for s in self.__servers.keys():
+        self.__server.servers_lock.acquire()
+        for s in self.__server.servers.keys():
             s_names.append(s)
-            s_ip.append(self.__servers[s][0])
-            s_port.append(self.__servers[s][1]) 
-        self.__servers_lock.release()
+            s_ip.append(self.__server.servers[s][0])
+            s_port.append(self.__server.servers[s][1]) 
+        self.__server.servers_lock.release()
         
         master_update = SyncServerListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
@@ -154,8 +150,8 @@ class BackupStrategy(ServerStrategy):
     
         
     def __notify_clients(self):
-        self.__clients_lock.acquire()
-        for c in self.__clients.keys():
+        self.__server.clients_lock.acquire()
+        for c in self.__server.clients.keys():
             notify_client_msg = NewMasterMessage(priority=0)
             notify_client_msg.serverSrc = self.__server.get_name()
             notify_client_msg.clientDst = c[0]
@@ -169,7 +165,7 @@ class BackupStrategy(ServerStrategy):
                 notify_client_msg.serverDst = str(self.__master[1][1])  # Master port
                 notify_client_msg.data = self.__master[0]               # Master name
             
-            client = self.__clients[c]
+            client = self.__server.clients[c]
             self.__server.output("Notifying client %s (%s:%d)..." % (c, client[0], client[1]))
             reply = notify_client_msg.send(client[0], client[1])
             
@@ -177,12 +173,12 @@ class BackupStrategy(ServerStrategy):
                 self.__server.output("Error notifying client %s (%s:%d)" %
                                      (c, client[0], client[1]), logging.ERROR)
                 self.__server.output(">>> %s" % notify_client_msg.data)
-                del self.__clients[c[0]]
-        self.__clients_lock.release()
+                del self.__server.clients[c[0]]
+        self.__server.clients_lock.release()
     
     
     def __notify_servers(self):
-        for s in self.__servers.keys():
+        for s in self.__server.servers.keys():
             notify_server_msg = NewMasterMessage(priority=0)
             notify_server_msg.serverSrc = self.__server.get_name()
             notify_server_msg.serverDst = s[0]
@@ -196,7 +192,7 @@ class BackupStrategy(ServerStrategy):
                 notify_server_msg.clientDst = str(self.__master[1][1]) # Master port
                 notify_server_msg.data = self.__master[0]              # Master name
                 
-            srv = self.__servers[s]
+            srv = self.__server.servers[s]
             self.__server.output("Notifying server %s (%s:%d)..." % (s, srv[0], srv[1]))
             reply = notify_server_msg.send(srv[0], srv[1])
             
@@ -259,17 +255,17 @@ class BackupStrategy(ServerStrategy):
         s_ip = pickle.loads(msg.clientDst)
         s_port = pickle.loads(msg.data)
         
-        self.__servers_lock.acquire()
-        self.__servers.clear()
+        self.__server.servers_lock.acquire()
+        self.__server.servers.clear()
         
         for i in range(len(s_name)):
-            self.__servers[s_name[i]] = (s_ip[i], int(s_port[i]))
-        self.__servers_lock.release()
+            self.__server.servers[s_name[i]] = (s_ip[i], int(s_port[i]))
+        self.__server.servers_lock.release()
         
         # Print Server list (debug)
         self.__server.output("SERVER LIST")
-        for s in self.__servers.keys():
-            self.__server.output("%s (%s:%d)" % (s, self.__servers[s][0], self.__servers[s][1]))
+        for s in self.__server.servers.keys():
+            self.__server.output("%s (%s:%d)" % (s, self.__server.servers[s][0], self.__server.servers[s][1]))
 
         reply = SyncServerListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -283,17 +279,17 @@ class BackupStrategy(ServerStrategy):
         c_ip = pickle.loads(msg.clientSrc)
         c_port = pickle.loads(msg.clientDst)
         
-        self.__clients_lock.acquire()
-        self.__clients.clear()
+        self.__server.clients_lock.acquire()
+        self.__server.clients.clear()
         
         for i in range(len(c_name)):
-            self.__clients[c_name[i]] = (c_ip[i], int(c_port[i]))
-        self.__clients_lock.release()
+            self.__server.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
+        self.__server.clients_lock.release()
         
         # Print Client list (debug)
         self.__server.output("CLIENT LIST")
-        for c in self.__clients.keys():
-            self.__server.output("%s (%s:%d)" % (c, self.__clients[c][0], self.__clients[c][1]))
+        for c in self.__server.clients.keys():
+            self.__server.output("%s (%s:%d)" % (c, self.__server.clients[c][0], self.__server.clients[c][1]))
         
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()

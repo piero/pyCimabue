@@ -25,6 +25,12 @@ class Server(ActiveObject):
         self.__listener = None
         self.__strategy = None
         self.__ping_agent = None
+        self.servers = {}           # List of Servers: (name, (ip, port))
+        self.clients_ping = {}      # Clients ping timestamps (name, last_ping_ts)
+        self.servers_lock = threading.Lock()
+        self.clients = {}           # List of Clients
+        self.servers_ping = {}      # Servers ping timestamps (name, last_ping_ts)
+        self.clients_lock = threading.Lock()
         self.output(("SERVER %s" % self.__name), logging.INFO)
     
     
