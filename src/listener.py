@@ -14,7 +14,7 @@ import threading
 
 class Listener(threading.Thread):
     
-    def __init__(self, executioner, host = '127.0.0.1', port = 50000):
+    def __init__(self, executor, host = '127.0.0.1', port = 50000):
         threading.Thread.__init__(self)
         self.__HOST = host
         self.__PORT = port
@@ -23,8 +23,8 @@ class Listener(threading.Thread):
         self.__SELECT_TIMEOUT = 1.0
         self.__RECV_TIMEOUT = 5.0
         self.__running = False
-        self.__executioner = executioner
-        self.__executioner.set_listener(self)
+        self.__executor = executor
+        self.__executor.set_listener(self)
         
         # Logging
         logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -44,9 +44,9 @@ class Listener(threading.Thread):
     
     def run(self):
         # Start active object
-        self.__executioner.ip = self.__HOST
-        self.__executioner.port = self.__PORT
-        self.__executioner.start()
+        self.__executor.ip = self.__HOST
+        self.__executor.port = self.__PORT
+        self.__executor.start()
         
         try:
             listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,7 +72,7 @@ class Listener(threading.Thread):
                                                                      [],
                                                                     self.__SELECT_TIMEOUT)
             except socket.error, (value, message):
-                self.__logger.error("[!] SOCKET ERROR: %s" % str(message))
+                self.__logger.error("[!] Listener SOCKET ERROR: %s" % str(message))
                 listen_skt.close()
                 
                 # Create a new listen socket
@@ -132,7 +132,7 @@ class Listener(threading.Thread):
                             msg = Message(skt)
                             msg_dict = pickle.loads(data)
                             msg.dict2msg(msg_dict)
-                            self.__executioner.add_request(msg, self.__executioner.REMOTE_REQUEST)
+                            self.__executor.add_request(msg, self.__executor.REMOTE_REQUEST)
                             
                         except KeyError:
                             pass
@@ -146,7 +146,7 @@ class Listener(threading.Thread):
 
         # Exit
         listen_skt.close()
-        self.__executioner.stop()
-        self.__logger.debug("Joining executioner...")
-        self.__executioner.join(2.0)
+        self.__executor.stop()
+        self.__logger.debug("Joining executor...")
+        self.__executor.join(2.0)
         self.__logger.info("[x] %s" % self.__class__.__name__)

@@ -29,11 +29,11 @@ if __name__=="__main__":
 	server.logger.setLevel(logging.DEBUG)
 	
 	if listen_ip != None:
-		listener = Listener(executioner=server, host=listen_ip, port=listen_port)
+		listener = Listener(executor=server, host=listen_ip, port=listen_port)
 	elif listen_port != None:
-		listener = Listener(executioner=server, port=listen_port)
+		listener = Listener(executor=server, port=listen_port)
 	else:
-		listener = Listener(executioner=server)
+		listener = Listener(executor=server)
 		
 	listener.start()
 	

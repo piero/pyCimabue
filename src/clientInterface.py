@@ -86,7 +86,7 @@ class ClientInterface:
             self.client.logger.setLevel(logging.DEBUG)
             self.client.interface = self
             
-            self.listener = Listener(executioner=self.client,
+            self.listener = Listener(executor=self.client,
                                      host=address,
                                      port=int(port))
             self.listener.start()

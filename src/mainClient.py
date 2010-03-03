@@ -103,7 +103,7 @@ if __name__=="__main__":
 	client.interface = client_output
 	client.interface.start()
 	
-	listener = Listener(executioner=client, host=sys.argv[1], port=int(sys.argv[2]))
+	listener = Listener(executor=client, host=sys.argv[1], port=int(sys.argv[2]))
 
 	listener.start()
 	client.connect()
