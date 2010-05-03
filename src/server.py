@@ -82,6 +82,56 @@ class Server(ActiveObject):
     def get_name(self):
         return self.__name
     
+    
+    def get_client_list(self):
+        """Return the list of connected Clients as a tuple."""
+        c_names = []
+        c_ip = []
+        c_port = []
+        
+        self.clients_lock.acquire()
+        for c in self.clients.keys():
+            c_names.append(c)
+            c_ip.append(self.clients[c][0])
+            c_port.append(self.clients[c][1])
+        self.clients_lock.release()
+        
+        return (c_names, c_ip, c_port)
+    
+    
+    def print_client_list(self):
+        """Print the Client list."""
+        self.clients_lock.acquire()
+        self.output("Clients:")
+        for c in self.clients.keys():
+            self.output((c, self.clients[c]))
+        self.clients_lock.release()
+    
+    
+    def print_server_list(self):
+        """Print the Server list."""
+        self.servers_lock.acquire()
+        self.output("Servers:")
+        for s in self.servers.keys():
+            self.output((s, self.servers[s]))
+        self.servers_lock.release()
+    
+    
+    def get_server_list(self):
+        """Return the list of connected Servers as a tuple."""
+        s_names = []
+        s_ip = []
+        s_port = []
+        
+        self.servers_lock.acquire()
+        for s in self.clients.keys():
+            s_names.append(s)
+            s_ip.append(self.clients[s][0])
+            s_port.append(self.clients[s][1])
+        self.servers_lock.release()
+        
+        return (s_names, s_ip, s_port)
+    
 
     def _process_request(self, msg, type):
         process_function = None
@@ -132,24 +182,29 @@ class Server(ActiveObject):
         
     
     def query_role(self):
+        """
+        Try to connect to each Server in the file and ask for a role.
+        If no one replies, we are the Master.
+        """
         parser = XMLParser('server_list.xml')
-        output_list = parser.get_output_list()
+        server_list = parser.get_output_list()
         connected = False
         
-        for i in range(len(output_list)):
+        for i in range(len(server_list)):
             # Skip ourselves
             host_and_port = self.__listener.get_host_and_port()
-            if output_list[i][0] == host_and_port[0] and int(output_list[i][1]) == host_and_port[1]:
+            if server_list[i][0] == host_and_port[0] and int(server_list[i][1]) == host_and_port[1]:
                 continue
             
-            self.output("Trying %s:%s..." % (output_list[i][0], output_list[i][1]))
+            self.output("Trying %s:%s..." % (server_list[i][0], server_list[i][1]))
             
             # Look for the Master Server
             skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                skt.connect((output_list[i][0], int(output_list[i][1])))
+                skt.connect((server_list[i][0], int(server_list[i][1])))
             except socket.error:
-                if skt != None:    skt.close()
+                if skt != None:
+                    skt.close()
                 continue
     
             # Send 'Hello' message
@@ -167,7 +222,7 @@ class Server(ActiveObject):
                 continue    # Oops, it wasn't the Master Server
             
             elif reply.type == 'WelcomeBackupMessage':
-                self.set_role(Server.BACKUP, (reply.serverSrc, (reply.clientSrc, int(reply.clientDst))))
+                self.set_role(Server.BACKUP, (reply, (server_list[i][0], int(server_list[i][1]))))
             
             elif reply.type == 'WelcomeIdleMessage':
                 self.set_role(Server.IDLE, (reply.serverSrc, (reply.clientSrc, int(reply.clientDst))))

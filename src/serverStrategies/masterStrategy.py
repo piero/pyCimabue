@@ -20,6 +20,10 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_ConnectMessage(self, msg):
+        """
+        Add a Client and update the Backup accordingly.
+        Return the list of other connected Clients as a message.
+        """
         self.__server.output("Processing ConnectMessage")
         self.__server.clients_lock.acquire()
         self.__server.clients[msg.clientSrc] = (msg.serverDst, int(msg.data))
@@ -45,6 +49,7 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_SendMessage(self, msg):
+        """Send a message to destination Client"""
         self.__server.output("Processing SendMessage")
         if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
         
@@ -68,6 +73,10 @@ class MasterStrategy(ServerStrategy):
 
     
     def _process_PingMessage(self, msg):
+        """
+        Ping Messages are used to determine other nodes' liveness.
+        When a Ping Message is received, the corresponding entry must be updated.
+        """
         if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
         
         # Process Ping messages from other servers
@@ -114,6 +123,7 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_ErrorMessage(self, msg):
+        """Nothing to document for the moment."""
         self.__server.output("Processing ErrorMessage")
         if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
         
@@ -124,6 +134,11 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_HelloMessage(self, msg):
+        """
+        Determine role of the sender and return the proper message.
+        If there's no Backup, the new Server becomes the Backup.
+        Otherwise it's an Idle Server, and Backup is updated accordingly.
+        """
         self.__server.output("Processing HelloMessage")
         
         if self.backup is None:
@@ -136,11 +151,16 @@ class MasterStrategy(ServerStrategy):
                                                                 self.backup[1],
                                                                 self.backup[2],
                                                                 self.__server.servers_ping[msg.serverSrc]))
+            clientList = self.__server.get_client_list()
+            
             reply = WelcomeBackupMessage(msg.skt, msg.priority)
+            reply.data = pickle.dumps(self.__server.clients)    # Client list
         
         else:
             reply = WelcomeIdleMessage(msg.skt, msg.priority)
-            
+            reply.clientSrc = self.__server.ip              # Master IP address
+            reply.clientDst = str(self.__server.port)       # Master Port
+                        
             # Add new Server
             self.__server.servers_lock.acquire()
             self.__server.servers[msg.serverSrc] = (msg.clientSrc, int(msg.clientDst))
@@ -156,23 +176,24 @@ class MasterStrategy(ServerStrategy):
             update_msg = self.sync_server_list()
             update_msg.send(self.backup[1], self.backup[2])
 
-        reply.clientSrc = self.__server.ip                # Master IP address
-        reply.clientDst = str(self.__server.port)        # Master Port
-        reply.serverSrc = self.__server.get_name()        # Master Name
+        reply.serverSrc = self.__server.get_name()      # Master Name
         reply.serverDst = msg.serverSrc
         return reply
         
     
     def _process_SyncClientListMessage(self, msg):
+        """Update the list of connected Clients."""
         c_name = pickle.loads(msg.data)
         c_ip = pickle.loads(msg.clientSrc)
         c_port = pickle.loads(msg.clientDst)
         
+        # Create Client list
         self.__server.clients_lock.acquire()
         self.__server.clients.clear()
         
         for i in range(len(c_name)):
             self.__server.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
+            self.__server.output(("Client %s (%s:%d)" % (c_name[i], c_ip[i], int(c_port[i]))))
         self.__server.clients_lock.release()
         
         reply = SyncClientListMessage(msg.skt, msg.priority)
@@ -182,10 +203,12 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_SyncServerListMessage(self, msg):
+        """Update the list of connected Servers."""
         s_name = pickle.loads(msg.data)
         s_ip = pickle.loads(msg.clientSrc)
         s_port = pickle.loads(msg.clientDst)
         
+        # Create Server list
         self.__server.servers_lock.acquire()
         self.__server.servers.clear()
         
@@ -200,6 +223,7 @@ class MasterStrategy(ServerStrategy):
     
 
     def sync_server_list(self):
+        """Create a list of connected Servers and returns it into a Message."""
         msg = SyncServerListMessage(priority=0, wait_for_reply=False)
         msg.serverSrc = self.__server.get_name()
         msg.serverDst = self.backup[0]
@@ -222,18 +246,16 @@ class MasterStrategy(ServerStrategy):
     
     
     def sync_client_list(self, except_client=None):
-        c_names = []
-        c_ip = []
-        c_port = []
-        
-        # Make the clients' list
+        """
+        Create a list of connected Clients.
+        Notify all Clients other than except_client.
+        Return a list with the names of connected Clients.
+        """
+        c_names = self.__server.get_client_list()[0]
+
         self.__server.clients_lock.acquire()
-        for c in self.__server.clients.keys():
-            c_names.append(c)
-            c_ip.append(self.__server.clients[c][0])
-            c_port.append(self.__server.clients[c][1])
         
-        # Notify the clients
+        # Notify all connected Clients
         for c in self.__server.clients.keys():
             if c != except_client:
                 self.__server.output("[i] Updating %s's client list..." % c)
@@ -249,7 +271,9 @@ class MasterStrategy(ServerStrategy):
         self.__server.clients_lock.release()
         return c_names
     
+    
     def sync_backup_client_list(self):
+        """Send a message to Backup with the list of connected Clients."""
         if self.backup is not None:
             c_names = []
             c_ip = []
@@ -277,6 +301,7 @@ class MasterStrategy(ServerStrategy):
 
 
     def __forward_message(self, dest_client, msg):
+        """Forward a message to the specified client."""
         self.__server.output(">>> Forwarding to %s (%s:%d)" % (msg.clientSrc,
                                                                dest_client[0],
                                                                dest_client[1]),

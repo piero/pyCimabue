@@ -9,20 +9,39 @@ from serverStrategy import *
 
 class BackupStrategy(ServerStrategy):
     
-    def __init__(self, server, master=None):
+    def __init__(self, server, arg=None):
         self.__server = server
         self.name = self.__server.BACKUP
-        self.__master = master
+        
+        # Set the Master
+        self.__master = (arg[0].serverSrc, (arg[1][0], arg[1][1]))
+        
         self.__server.output("Behaviour: %s" % self.name)
         if self.__master != None:
-            self.__server.output("(master: %s)" % self.__master[0])
-            
+            self.__server.output("(Master: %s (%s:%d)" % (self.__master[0], self.__master[1][0], self.__master[1][1]))
+        
+        # Set the Clients list
+        self.__server.clients_lock.acquire()
+        self.__server.clients = pickle.loads(arg[0].data)
+        self.__server.clients_lock.release()
+        self.__server.print_client_list()
+        
+        # --- Reminder ---
+        # There's no need to update the Server list, because
+        # we are always the server after the Master.
+        # ----------------
+        
 
     def get_master(self):
+        """Return our Master."""
         return self.__master
     
     
     def elect_new_master(self):
+        """
+        Elect a new Master.
+        If there isn't any Server available, we become the new Master.
+        """
         self.__server.output("Electing a new Master...", logging.INFO)
         self.__master = None
         
@@ -88,26 +107,18 @@ class BackupStrategy(ServerStrategy):
     
     
     def sync_client_list(self):
+        """Synchronize Client list on a newly elected Master."""
         if self.__master is None:
             return False
         
-        c_names = []
-        c_ip = []
-        c_port = []
-        
-        self.__server.clients_lock.acquire()
-        for c in self.__server.clients.keys():
-            c_names.append(c)
-            c_ip.append(self.__server.clients[c][0])
-            c_port.append(self.__server.clients[c][1])
-        self.__server.clients_lock.release()
-        
+        clientList = self.__server.get_client_list()
+    
         master_update = SyncClientListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
         master_update.serverDst = self.__master
-        master_update.clientSrc = pickle.dumps(c_ip)    # Client IPs
-        master_update.clientDst = pickle.dumps(c_port)  # Client ports
-        master_update.data = pickle.dumps(c_names)      # Client names
+        master_update.clientSrc = pickle.dumps(clientList[1])   # Client IPs
+        master_update.clientDst = pickle.dumps(clientList[2])   # Client ports
+        master_update.data = pickle.dumps(clientList[0])        # Client names
         reply = master_update.send(self.__master[1][0], self.__master[1][1])
         
         if reply is None or reply == ErrorMessage:
@@ -115,30 +126,23 @@ class BackupStrategy(ServerStrategy):
             self.__server.output(">>> %s" % master_update.data)
             return False
         else:
+            self.__server.output("Synchronized client list on Master")
             return True
         
     
     def sync_server_list(self):
+        """Synchronize Server list on a newly elected Master."""
         if self.__master is None:
             return False
         
-        s_names = []
-        s_ip = []
-        s_port = []
-        
-        self.__server.servers_lock.acquire()
-        for s in self.__server.servers.keys():
-            s_names.append(s)
-            s_ip.append(self.__server.servers[s][0])
-            s_port.append(self.__server.servers[s][1]) 
-        self.__server.servers_lock.release()
+        serverList = self.__server.get_server_list()
         
         master_update = SyncServerListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
         master_update.serverDst = self.__master
-        master_update.clientSrc = pickle.dumps(s_ip)    # Server IPs
-        master_update.clientDst = pickle.dumps(s_port)  # Server ports
-        master_update.data = pickle.dumps(s_names)      # Server names
+        master_update.clientSrc = pickle.dumps(serverList[1])   # Server IPs
+        master_update.clientDst = pickle.dumps(serverList[2])   # Server ports
+        master_update.data = pickle.dumps(serverList[0])        # Server names
         reply = master_update.send(self.__master[1][0], self.__master[1][1])
         
         if reply is None or reply == ErrorMessage:
@@ -146,10 +150,12 @@ class BackupStrategy(ServerStrategy):
             self.__server.output(">>> %s" % master_update.data)
             return False
         else:
+            self.__server.output("Synchronized server list on Master")
             return True
     
         
     def __notify_clients(self):
+        """Notify Clients that Master has changed."""
         self.__server.clients_lock.acquire()
         for c in self.__server.clients.keys():
             notify_client_msg = NewMasterMessage(priority=0)
@@ -178,6 +184,7 @@ class BackupStrategy(ServerStrategy):
     
     
     def __notify_servers(self):
+        """Notify other Servers that Master has changed."""
         for s in self.__server.servers.keys():
             notify_server_msg = NewMasterMessage(priority=0)
             notify_server_msg.serverSrc = self.__server.get_name()
@@ -240,16 +247,18 @@ class BackupStrategy(ServerStrategy):
     
     
     def _process_HelloMessage(self, msg):
+        """Return an Error Message, since we're not the Master."""
         reply = ErrorMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
         reply.serverDst = msg.serverSrc
-        reply.clientSrc = self.__master[1][0]            # Master IP address
-        reply.clientDst = str(self.__master[1][1])        # Master Port
-        reply.data = self.__master[0]                    # Master Name
+        reply.clientSrc = self.__master[1][0]           # Master IP address
+        reply.clientDst = str(self.__master[1][1])      # Master Port
+        reply.data = self.__master[0]                   # Master Name
         return reply
     
     
     def _process_SyncServerListMessage(self, msg):
+        """Update our Server list."""
         self.__server.output(("Received ServerList from %s" % msg.serverSrc), logging.INFO)
         s_name = pickle.loads(msg.clientSrc)
         s_ip = pickle.loads(msg.clientDst)
@@ -274,6 +283,7 @@ class BackupStrategy(ServerStrategy):
 
 
     def _process_SyncClientListMessage(self, msg):
+        """Update our Client list."""
         self.__server.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
         c_name = pickle.loads(msg.data)
         c_ip = pickle.loads(msg.clientSrc)
