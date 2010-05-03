@@ -111,14 +111,10 @@ class BackupStrategy(ServerStrategy):
         if self.__master is None:
             return False
         
-        clientList = self.__server.get_client_list()
-    
         master_update = SyncClientListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
         master_update.serverDst = self.__master
-        master_update.clientSrc = pickle.dumps(clientList[1])   # Client IPs
-        master_update.clientDst = pickle.dumps(clientList[2])   # Client ports
-        master_update.data = pickle.dumps(clientList[0])        # Client names
+        master_update.data = pickle.dumps(self.__server.clients)
         reply = master_update.send(self.__master[1][0], self.__master[1][1])
         
         if reply is None or reply == ErrorMessage:
@@ -135,14 +131,10 @@ class BackupStrategy(ServerStrategy):
         if self.__master is None:
             return False
         
-        serverList = self.__server.get_server_list()
-        
         master_update = SyncServerListMessage(priority=0)
         master_update.serverSrc = self.__server.get_name()
         master_update.serverDst = self.__master
-        master_update.clientSrc = pickle.dumps(serverList[1])   # Server IPs
-        master_update.clientDst = pickle.dumps(serverList[2])   # Server ports
-        master_update.data = pickle.dumps(serverList[0])        # Server names
+        master_update.data = pickle.dumps(self.__server.servers)
         reply = master_update.send(self.__master[1][0], self.__master[1][1])
         
         if reply is None or reply == ErrorMessage:
@@ -153,7 +145,7 @@ class BackupStrategy(ServerStrategy):
             self.__server.output("Synchronized server list on Master")
             return True
     
-        
+    
     def __notify_clients(self):
         """Notify Clients that Master has changed."""
         self.__server.clients_lock.acquire()
@@ -260,21 +252,12 @@ class BackupStrategy(ServerStrategy):
     def _process_SyncServerListMessage(self, msg):
         """Update our Server list."""
         self.__server.output(("Received ServerList from %s" % msg.serverSrc), logging.INFO)
-        s_name = pickle.loads(msg.clientSrc)
-        s_ip = pickle.loads(msg.clientDst)
-        s_port = pickle.loads(msg.data)
         
         self.__server.servers_lock.acquire()
         self.__server.servers.clear()
-        
-        for i in range(len(s_name)):
-            self.__server.servers[s_name[i]] = (s_ip[i], int(s_port[i]))
+        self.__server.servers = pickle.loads(msg.data)
         self.__server.servers_lock.release()
-        
-        # Print Server list (debug)
-        self.__server.output("SERVER LIST")
-        for s in self.__server.servers.keys():
-            self.__server.output("%s (%s:%d)" % (s, self.__server.servers[s][0], self.__server.servers[s][1]))
+        self.__server.print_server_list()
 
         reply = SyncServerListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -285,21 +268,12 @@ class BackupStrategy(ServerStrategy):
     def _process_SyncClientListMessage(self, msg):
         """Update our Client list."""
         self.__server.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
-        c_name = pickle.loads(msg.data)
-        c_ip = pickle.loads(msg.clientSrc)
-        c_port = pickle.loads(msg.clientDst)
         
         self.__server.clients_lock.acquire()
         self.__server.clients.clear()
-        
-        for i in range(len(c_name)):
-            self.__server.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
+        self.__server.clients = pickle.loads(msg.data)
         self.__server.clients_lock.release()
-        
-        # Print Client list (debug)
-        self.__server.output("CLIENT LIST")
-        for c in self.__server.clients.keys():
-            self.__server.output("%s (%s:%d)" % (c, self.__server.clients[c][0], self.__server.clients[c][1]))
+        self.__server.print_client_list()
         
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()

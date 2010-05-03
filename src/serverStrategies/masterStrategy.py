@@ -151,7 +151,6 @@ class MasterStrategy(ServerStrategy):
                                                                 self.backup[1],
                                                                 self.backup[2],
                                                                 self.__server.servers_ping[msg.serverSrc]))
-            clientList = self.__server.get_client_list()
             
             reply = WelcomeBackupMessage(msg.skt, msg.priority)
             reply.data = pickle.dumps(self.__server.clients)    # Client list
@@ -182,19 +181,12 @@ class MasterStrategy(ServerStrategy):
         
     
     def _process_SyncClientListMessage(self, msg):
-        """Update the list of connected Clients."""
-        c_name = pickle.loads(msg.data)
-        c_ip = pickle.loads(msg.clientSrc)
-        c_port = pickle.loads(msg.clientDst)
-        
-        # Create Client list
+        """Update the list of connected Clients."""        
         self.__server.clients_lock.acquire()
         self.__server.clients.clear()
-        
-        for i in range(len(c_name)):
-            self.__server.clients[c_name[i]] = (c_ip[i], int(c_port[i]))
-            self.__server.output(("Client %s (%s:%d)" % (c_name[i], c_ip[i], int(c_port[i]))))
+        self.__server.clients = pickle.loads(msg.data)
         self.__server.clients_lock.release()
+        self.__server.print_client_list()
         
         reply = SyncClientListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -204,17 +196,11 @@ class MasterStrategy(ServerStrategy):
     
     def _process_SyncServerListMessage(self, msg):
         """Update the list of connected Servers."""
-        s_name = pickle.loads(msg.data)
-        s_ip = pickle.loads(msg.clientSrc)
-        s_port = pickle.loads(msg.clientDst)
-        
-        # Create Server list
         self.__server.servers_lock.acquire()
         self.__server.servers.clear()
-        
-        for i in range(len(s_name)):
-            self.__server.servers[s_name[i]] = (s_ip[i], int(s_port[i]))
+        self.__server.servers = pickle.loads(msg.data)
         self.__server.servers_lock.release()
+        self.__server.print_server_list()
         
         reply = SyncServerListMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
@@ -228,20 +214,10 @@ class MasterStrategy(ServerStrategy):
         msg.serverSrc = self.__server.get_name()
         msg.serverDst = self.backup[0]
         
-        s_names = []
-        s_ip = []
-        s_port = []
-        
         self.__server.servers_lock.acquire()
-        for s in self.__server.servers.keys():
-            s_names.append(s)
-            s_ip.append(self.__server.servers[s][0])
-            s_port.append(self.__server.servers[s][1])
+        msg.data = pickle.dumps(self.__server.servers)
         self.__server.servers_lock.release()
             
-        msg.clientSrc = pickle.dumps(s_names)
-        msg.clientDst = pickle.dumps(s_ip)
-        msg.data = pickle.dumps(s_port)
         return msg
     
     
@@ -274,25 +250,14 @@ class MasterStrategy(ServerStrategy):
     
     def sync_backup_client_list(self):
         """Send a message to Backup with the list of connected Clients."""
-        if self.backup is not None:
-            c_names = []
-            c_ip = []
-            c_port = []
-            
-            self.__server.clients_lock.acquire()
-            for c in self.__server.clients.keys():
-                c_names.append(c)
-                c_ip.append(self.__server.clients[c][0])
-                c_port.append(self.__server.clients[c][1])
-            self.__server.clients_lock.release()
-            
+        if self.backup is not None:            
             self.__server.output("[i] Updating clients on Backup Server %s..." % self.backup[0])
             backup_update = SyncClientListMessage(priority=0)
             backup_update.serverSrc = self.__server.get_name()
             backup_update.serverDst = self.backup[0]
-            backup_update.clientSrc = pickle.dumps(c_ip)
-            backup_update.clientDst = pickle.dumps(c_port)
-            backup_update.data = pickle.dumps(c_names)
+            self.__server.clients_lock.acquire()
+            backup_update.data = pickle.dumps(self.__server.clients)
+            self.__server.clients_lock.release()
         
             reply = backup_update.send(self.backup[1], self.backup[2])
             if reply is None or reply.type == 'ErrorMessage':
