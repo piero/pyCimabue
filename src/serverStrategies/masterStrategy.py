@@ -9,13 +9,34 @@ from serverStrategy import *
 
 class MasterStrategy(ServerStrategy):
     
-    def __init__(self, server, backup=None):
+    def __init__(self, server, arg=None):
         self.__server = server
         self.name = self.__server.MASTER
-        self.backup = backup
+        
+        if arg is None:
+            self.backup = None
+        else:
+            # Set the Backup server
+            if arg.clientSrc != "": 
+                backup_ip_and_port = pickle.loads(arg.clientSrc)
+                self.backup = (arg.serverSrc, backup_ip_and_port[0], backup_ip_and_port[1])
+                
+            # Set Client list
+            if arg.clientDst != "":
+                self.__server.servers_lock.acquire()
+                self.__server.clients = pickle.loads(arg.clientDst)
+                self.__server.servers_lock.release()
+                self.__server.print_server_list()
+                
+            # Set Server list
+            if arg.data != "":
+                self.__server.clients_lock.acquire()
+                self.__server.servers = pickle.loads(arg.data)
+                self.__server.clients_lock.release()
+                self.__server.print_client_list()
         
         self.__server.output("Behaviour: %s" % self.name)
-        if backup is not None:
+        if self.backup is not None:
             self.__server.output("(backup: %s (%s:%d)" % (self.backup[0], self.backup[1], self.backup[2]))
     
     
@@ -51,7 +72,10 @@ class MasterStrategy(ServerStrategy):
     def _process_SendMessage(self, msg):
         """Send a message to destination Client"""
         self.__server.output("Processing SendMessage")
-        if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
+        if not self.__server._check_recipient(msg):
+            reply = ErrorMessage(msg.skt, msg.priority)
+            reply.data = "Wrong recipient"
+            return reply
         
         self.__server.clients_lock.acquire()
         if msg.clientDst in self.__server.clients.keys():

@@ -68,11 +68,7 @@ class IdleStrategy(ServerStrategy):
     
     
     def _process_BecomeMasterMessage(self, msg):
-        new_backup = (msg.serverSrc, msg.clientSrc, int(msg.clientDst))
-        self.__server.output("Becoming Master (backup: %s (%s:%d)" % (new_backup[0],
-                                                                    new_backup[1],
-                                                                    new_backup[2]))
-        self.__server.set_role(self.__server.MASTER, new_backup)
+        self.__server.set_role(self.__server.MASTER, msg)
         
         reply = BecomeMasterMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()

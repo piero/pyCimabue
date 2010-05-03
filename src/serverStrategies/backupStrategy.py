@@ -63,8 +63,9 @@ class BackupStrategy(ServerStrategy):
             elect_msg = BecomeMasterMessage(priority=0)
             elect_msg.serverSrc = self.__server.get_name()  # Candidate name
             elect_msg.serverDst = candidate[0]              # Candidate IP 
-            elect_msg.clientSrc = self.__server.ip          # Our IP
-            elect_msg.clientDst = str(self.__server.port)   # Our port
+            elect_msg.clientSrc = pickle.dumps((self.__server.ip, self.__server.port)) # Our IP and port
+            elect_msg.clientDst = pickle.dumps(self.__server.clients)   # Client list
+            elect_msg.data = pickle.dumps(self.__server.servers)        # Server list
             reply = elect_msg.send(candidate[1][0], candidate[1][1])
             
             # 3) If successful, we can break the loop
