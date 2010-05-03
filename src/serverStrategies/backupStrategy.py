@@ -23,14 +23,14 @@ class BackupStrategy(ServerStrategy):
         if self.__master != None:
             self.__server.output("(Master: %s (%s:%d)" % (self.__master[0], self.__master[1][0], self.__master[1][1]))
         
-        # Set the Clients list
+        # Set the Client list, if any
         if arg[0].data != "":
             self.__server.clients_lock.acquire()
             self.__server.clients = pickle.loads(arg[0].data)
             self.__server.clients_lock.release()
             self.__server.print_client_list()
         
-        # Set the Servers list, if any
+        # Set the Server list, if any
         if arg[0].clientDst != "":
             self.__server.servers_lock.acquire()
             self.__server.servers = pickle.loads(arg[0].clientDst)
