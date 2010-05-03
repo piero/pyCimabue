@@ -10,6 +10,9 @@ from serverStrategy import *
 class BackupStrategy(ServerStrategy):
     
     def __init__(self, server, arg=None):
+        """
+        arg = (Message, (Master_IP, Master_port))
+        """
         self.__server = server
         self.name = self.__server.BACKUP
         
@@ -21,15 +24,18 @@ class BackupStrategy(ServerStrategy):
             self.__server.output("(Master: %s (%s:%d)" % (self.__master[0], self.__master[1][0], self.__master[1][1]))
         
         # Set the Clients list
-        self.__server.clients_lock.acquire()
-        self.__server.clients = pickle.loads(arg[0].data)
-        self.__server.clients_lock.release()
-        self.__server.print_client_list()
+        if arg[0].data != "":
+            self.__server.clients_lock.acquire()
+            self.__server.clients = pickle.loads(arg[0].data)
+            self.__server.clients_lock.release()
+            self.__server.print_client_list()
         
-        # --- Reminder ---
-        # There's no need to update the Server list, because
-        # we are always the server after the Master.
-        # ----------------
+        # Set the Servers list, if any
+        if arg[0].clientDst != "":
+            self.__server.servers_lock.acquire()
+            self.__server.servers = pickle.loads(arg[0].clientDst)
+            self.__server.servers_lock.release()
+            self.__server.print_server_list()
         
 
     def get_master(self):

@@ -93,3 +93,15 @@ class IdleStrategy(ServerStrategy):
         reply.clientDst = msg.clientSrc
         reply.data = ""
         return reply
+
+
+    def _process_BecomeBackupMessage(self, msg):
+        """Become the new Backup server"""
+        master_ip_and_port = pickle.loads(msg.clientSrc)
+        self.__server.set_role(self.__server.BACKUP, (msg, (master_ip_and_port[0], master_ip_and_port[1])))
+
+        reply = BecomeBackupMessage(msg.skt, msg.priority)
+        reply.serverSrc = self.__server.get_name()
+        reply.serverDst = msg.serverSrc
+        return reply
+    

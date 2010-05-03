@@ -40,11 +40,12 @@ class Server(ActiveObject):
             
     
     def _kill_dependancies(self):
-        if self.__strategy != None:
+        """De-initialise any related instance and thread."""
+        if self.__strategy is not None:
             self.output("[x] Exiting strategy...")
             self.__strategy.exit()
         
-        if self.__ping_agent != None and self.__ping_agent.is_alive():
+        if self.__ping_agent is not None and self.__ping_agent.is_alive():
             self.output("[x] Killing Ping Agent...")
             self.__ping_agent.stop()
             self.__ping_agent.join(1.0)
@@ -56,9 +57,8 @@ class Server(ActiveObject):
     
     
     def set_role(self, role, arg=None):
-        if self.__strategy != None:
-            self.output("[x] Exiting strategy...")
-            self.__strategy.exit()
+        """Set a new strategy."""
+        self._kill_dependancies()
         
         self.output("Setting role: %s" % role)
         
@@ -103,8 +103,11 @@ class Server(ActiveObject):
         """Print the Client list."""
         self.clients_lock.acquire()
         self.output("Clients:")
-        for c in self.clients.keys():
-            self.output((c, self.clients[c]))
+        if len(self.clients) == 0:
+            self.output("None")
+        else:
+            for c in self.clients.keys():
+                self.output((c, self.clients[c]))
         self.clients_lock.release()
     
     
@@ -112,8 +115,11 @@ class Server(ActiveObject):
         """Print the Server list."""
         self.servers_lock.acquire()
         self.output("Servers:")
-        for s in self.servers.keys():
-            self.output((s, self.servers[s]))
+        if len(self.servers) == 0:
+            self.output("None")
+        else:
+            for s in self.servers.keys():
+                self.output((s, self.servers[s]))
         self.servers_lock.release()
     
     

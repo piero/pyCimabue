@@ -123,7 +123,6 @@ class MasterStrategy(ServerStrategy):
     
     
     def _process_ErrorMessage(self, msg):
-        """Nothing to document for the moment."""
         self.__server.output("Processing ErrorMessage")
         if not self.__server._check_recipient(msg): return ErrorMessage(msg.skt)
         
@@ -131,6 +130,56 @@ class MasterStrategy(ServerStrategy):
         reply.serverSrc = self.__server.get_name()
         reply.clientDst = msg.clientSrc
         return reply
+    
+    
+    def elect_backup_server(self):
+        """Elect a Backup server."""
+        self.__server.servers_lock.acquire()
+        
+        # Delete any previous Backup server
+        if self.backup is not None:
+            del self.__server.servers[self.backup[0]]
+            self.backup = None
+        
+        for s in self.__server.servers.keys():
+            candidate = (s, self.__server.servers[s][0], self.__server.servers[s][1])
+            # In any case remove candidate from Server list:
+            # either it will be the new Backup or will be down
+            del self.__server.servers[s]
+            
+            req = BecomeBackupMessage(priority=0)
+            req.serverSrc = self.__server.get_name()
+            req.serverDst = s
+            req.clientSrc = pickle.dumps((self.__server.ip, self.__server.port))    # Master IP and port
+            
+            if len(self.__server.servers) > 0:
+                
+                req.clientDst = pickle.dumps(self.__server.servers)                 # Server list
+            
+            self.__server.clients_lock.acquire()
+            if len(self.__server.clients) > 0:
+                req.data = pickle.dumps(self.__server.clients)                      # Client list
+            self.__server.clients_lock.release()        
+            
+            self.__server.servers_lock.release()
+            self.__server.output("Electing Backup %s (%s:%d)..." % (candidate[0], candidate[1], candidate[2]))
+            reply = req.send(candidate[1], candidate[2])
+            self.__server.servers_lock.acquire()
+            
+            if reply is not None and reply.type != 'ErrorMessage':
+                self.backup = candidate
+                break
+            else:
+                self.__server.output("[!] Error electing %s as Backup" % s)
+        
+        self.__server.servers_lock.release()
+        
+        if self.backup is None:
+            self.__server.output("[!] Error electing a new Backup server")
+        else:
+            self.__server.output("Set backup: %s (%s:%d)" % (self.backup[0],
+                                                             self.backup[1],
+                                                             self.backup[2]))
     
     
     def _process_HelloMessage(self, msg):
@@ -153,7 +202,8 @@ class MasterStrategy(ServerStrategy):
                                                                 self.__server.servers_ping[msg.serverSrc]))
             
             reply = WelcomeBackupMessage(msg.skt, msg.priority)
-            reply.data = pickle.dumps(self.__server.clients)    # Client list
+            if len(self.__server.clients) > 0:
+                reply.data = pickle.dumps(self.__server.clients)    # Client list
         
         else:
             reply = WelcomeIdleMessage(msg.skt, msg.priority)
@@ -172,8 +222,7 @@ class MasterStrategy(ServerStrategy):
                                                             s[1],
                                                             self.__server.servers_ping[msg.serverSrc]))
             # Update Backup Server
-            update_msg = self.sync_server_list()
-            update_msg.send(self.backup[1], self.backup[2])
+            self.sync_server_list()
 
         reply.serverSrc = self.__server.get_name()      # Master Name
         reply.serverDst = msg.serverSrc
@@ -209,16 +258,18 @@ class MasterStrategy(ServerStrategy):
     
 
     def sync_server_list(self):
-        """Create a list of connected Servers and returns it into a Message."""
-        msg = SyncServerListMessage(priority=0, wait_for_reply=False)
+        """Send the list of connected Servers to Backup."""
+        msg = SyncServerListMessage(priority=0)
         msg.serverSrc = self.__server.get_name()
         msg.serverDst = self.backup[0]
         
         self.__server.servers_lock.acquire()
         msg.data = pickle.dumps(self.__server.servers)
         self.__server.servers_lock.release()
-            
-        return msg
+        
+        reply = msg.send(self.backup[1], self.backup[2])
+        if reply is None or reply.type == 'ErrorMessage':
+            self.__server.output("[!] Error synchronizing server list on Backup Server")
     
     
     def sync_client_list(self, except_client=None):
@@ -262,7 +313,6 @@ class MasterStrategy(ServerStrategy):
             reply = backup_update.send(self.backup[1], self.backup[2])
             if reply is None or reply.type == 'ErrorMessage':
                 self.__server.output("[!] Error synchronizing client list on Backup Server")
-                self.__server.output(">>> %s" % backup_update.data)
 
 
     def __forward_message(self, dest_client, msg):

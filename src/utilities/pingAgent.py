@@ -60,13 +60,20 @@ class PingAgent(threading.Thread):
                     del self.__caller.servers[k]
                     self.__caller.output("[-] Removed %s (%d servers left)" % (k, len(self.__caller.servers)),
                                         logging.WARNING)
+                    self.__caller.servers_lock.release()
                     self.__caller.get_role().sync_server_list()
+                    self.__caller.servers_lock.acquire()
                 
                 else:
                     del self.__caller.get_role().backup
                     self.__caller.get_role().backup = None
+                    
+                    # Elect a new Backup server
                     self.__caller.output("[!] Backup Server left (%s)!" % k, logging.WARNING)
-                    # TODO: Start Backup rescue procedure!
+                    self.__caller.servers_lock.release()
+                    self.__caller.get_role().elect_backup_server()
+                    self.__caller.servers_lock.acquire()
+                    
         self.__caller.servers_lock.release()
                 
         # Check clients
