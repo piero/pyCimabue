@@ -18,9 +18,9 @@ class ClientProxy(ActiveObject):
         self.skt = None
         self.ip = ip
         self.port = port
-        self.server_ip = None
-        self.server_port = None
-        self.server_name = None
+        self.master_ip = None
+        self.master_port = None
+        self.master_name = None
         self.__listener = None
         self.__clients = []
         self.__connected = False
@@ -45,13 +45,14 @@ class ClientProxy(ActiveObject):
         
     
     def connect(self):
+        """Connect to a Server."""
         parser = XMLParser('server_list.xml')
-        output_list = parser.get_output_list()
+        server_list = parser.get_output_list()
         self.__connected = False
         
-        for i in range(len(output_list)):
-            self.output("Connecting to %s:%s..." % (output_list[i][0], output_list[i][1]))
-            if self.connect_to_server(output_list[i][0], int(output_list[i][1])):
+        for i in range(len(server_list)):
+            self.output("Connecting to %s:%s..." % (server_list[i][0], server_list[i][1]))
+            if self.connect_to_server(server_list[i][0], int(server_list[i][1])):
                 break
         
         if not self.__connected:
@@ -59,8 +60,8 @@ class ClientProxy(ActiveObject):
             return False
         
         else:
-            self.output("Connected to %s (%s:%d)" % (self.server_name, self.server_ip, self.server_port))
-            self.interface.set_status("Connected to %s" % self.server_name)
+            self.output("Connected to %s (%s:%d)" % (self.master_name, self.master_ip, self.master_port))
+            self.interface.set_status("Connected to %s" % self.master_name)
             
             # Start the Ping Agent
             self.__ping_agent = PingAgent(caller=self, run_as_server=False)
@@ -69,6 +70,7 @@ class ClientProxy(ActiveObject):
     
     
     def send_message(self, destination, message):
+        """Send a message to destination Client."""
         if not self.__connected or self.skt is None:
             self.interface.set_status("Not connected to server")
             return None 
@@ -83,11 +85,11 @@ class ClientProxy(ActiveObject):
         msg = SendMessage()
         msg.clientSrc = self.__name
         msg.clientDst = destination
-        msg.serverDst = self.server_name
+        msg.serverDst = self.master_name
         msg.data = message
         
         # Send the message
-        reply = msg.send(self.server_ip, self.server_port)
+        reply = msg.send(self.master_ip, self.master_port)
         if reply is None:
             if self.interface is not None:
                 self.interface.print_message("Error sending message to %s: %s" % (destination, msg.data))
@@ -96,7 +98,7 @@ class ClientProxy(ActiveObject):
     
 
     def _process_request(self, msg, type):
-        # Dynamically call the proper function
+        """Process a received request by dynamically calling the proper method."""
         try:
             process_function_name = "_process_" + msg.type
             process_function = getattr(self, process_function_name)
@@ -115,6 +117,7 @@ class ClientProxy(ActiveObject):
     
         
     def _process_SendMessage(self, msg):
+        """Display the received Message."""
         print 'Processing SendMessage'
         
         if self.interface is not None:
@@ -132,13 +135,16 @@ class ClientProxy(ActiveObject):
     
     def _process_PingMessage(self, msg):
         print 'Processing PingMessage'
+        # TODO
         
     
     def _process_errorMessage(self, msg):
         print 'Processing ErrorMessage'
+        # TODO
     
     
     def _process_SyncClientListMessage(self, msg):
+        """Update the list of connected Clients."""
         self.output(("Received ClientList from %s" % msg.serverSrc), logging.INFO)
         c_names = pickle.loads(msg.data)
         
@@ -150,17 +156,18 @@ class ClientProxy(ActiveObject):
         return reply
     
     
-    def _process_NewMasterMessage(self, msg):    
-        self.server_name = msg.data
-        self.server_ip = msg.clientSrc
-        self.server_port = int(msg.serverDst)
+    def _process_NewMasterMessage(self, msg):
+        """Master has changed: update related information."""
+        self.master_name = msg.data
+        self.master_ip = msg.clientSrc
+        self.master_port = int(msg.serverDst)
         
-        self.output(("New Master is %s (%s:%d)" % (self.server_name,
-                                                   self.server_ip,
-                                                   self.server_port)),
+        self.output(("New Master is %s (%s:%d)" % (self.master_name,
+                                                   self.master_ip,
+                                                   self.master_port)),
                                                    logging.INFO)
         
-        self.interface.set_status("Connected to %s" % self.server_name)
+        self.interface.set_status("Connected to %s" % self.master_name)
         
         reply = NewMasterMessage(msg.skt, msg.priority)
         reply.clientSrc = self.__name
@@ -169,6 +176,10 @@ class ClientProxy(ActiveObject):
     
     
     def connect_to_server(self, server_ip, server_port):
+        """
+        Connect to the specified Server.
+        Try until connected to the Master server, or until there are no Servers left.
+        """
         if self.skt is not None:
             # Close previous socket
             self.skt.close()
@@ -201,9 +212,9 @@ class ClientProxy(ActiveObject):
             
         else:
             # We found the Master Server
-            self.server_ip = server_ip
-            self.server_port = server_port
-            self.server_name = reply.serverSrc
+            self.master_ip = server_ip
+            self.master_port = server_port
+            self.master_name = reply.serverSrc
             
             # Update clients list
             if reply.data is not None:
@@ -214,6 +225,7 @@ class ClientProxy(ActiveObject):
             
     
     def __update_client_list(self, client_list):
+        """Update the Client list and display in on the interface."""
         # Clear the clients list
         while len(self.__clients):
             self.__clients.pop()

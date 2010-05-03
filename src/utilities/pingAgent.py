@@ -122,14 +122,16 @@ class PingAgent(threading.Thread):
     
     
     def __run_as_client(self):
-        self.__caller.output("Pinging Master: %s (%s:%d)" % (self.__caller.server_name,
-                                                                    self.__caller.server_ip,
-                                                                    self.__caller.server_port))
+        self.__caller.output("Pinging Master: %s (%s:%d)" % (self.__caller.master_name,
+                                                                    self.__caller.master_ip,
+                                                                    self.__caller.master_port))
         msg = PingMessage(priority=1)
         msg.clientSrc = self.__caller.get_name()
-        msg.serverDst = self.__caller.server_name
-        reply = msg.send(self.__caller.server_ip, self.__caller.server_port)
+        msg.serverDst = self.__caller.master_name
+        reply = msg.send(self.__caller.master_ip, self.__caller.master_port)
         
         if reply != None and reply.type == 'ErrorMessage':
-            self.__caller.output(("[!] Master %s doesn't know me" % self.__caller.server_name), logging.WARNING)
-            self.__caller.connect_to_server(self.__caller.server_ip, self.__caller.server_port)
+            self.__caller.output(("[!] Master %s doesn't know me" % self.__caller.master_name), logging.WARNING)
+            self.__caller.connect_to_server(self.__caller.master_ip, self.__caller.master_port)
+        
+        # TODO: if reply == None --> Disconnected from Server!
