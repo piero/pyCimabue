@@ -22,7 +22,8 @@ gobject.threads_init()
 class ClientInterface:
     
     def addClientCallback(self, client=None):
-        self.clientList.append([client])
+        if client is not None:
+            self.clientList.append([client])
         
     def clearClientListCallback(self):
         self.clientList.clear()
@@ -47,7 +48,7 @@ class ClientInterface:
             print "Sending \"%s\" to  %s" % (text, destination)
         
         if destination is not None:
-            reply = self.client.send_message(destination, text)
+            reply = self.proxy.send_message(destination, text)
         
         if reply is not None:
             self.print_message("> %s: %s" % (destination, text))
@@ -55,24 +56,24 @@ class ClientInterface:
     
     def delete_event(self, widget, event, data=None):
         print "Bye :)"
-        self.__destroy_client()
+        self.__destroy_proxy()
         gtk.main_quit()
         
     
-    def __destroy_client(self):
+    def __destroy_proxy(self):
         if self.listener != None:
             self.listener.stop()
             self.listener.join(2.0)
             self.listener = None
         
-        if self.client != None:
-            self.client.kill()
-            self.client = None
+        if self.proxy != None:
+            self.proxy.kill()
+            self.proxy = None
     
     
     def __create_new_client(self, widget, data=None):
-        if self.client != None:
-            self.__destroy_client()
+        if self.proxy != None:
+            self.__destroy_proxy()
             
         widget.set_sensitive(False)
         address = self.addressField.get_text()
@@ -81,22 +82,22 @@ class ClientInterface:
         if address == None or port == None:
             self.set_status("ERROR: Invalid address or port")
         else:
-            print "Creating new client %s:%s..." % (address, port)
-            self.client = ClientProxy(address, int(port))
-            self.client.logger.setLevel(logging.DEBUG)
-            self.client.interface = self
+            print "Creating new proxy %s:%s..." % (address, port)
+            self.proxy = ClientProxy(address, int(port))
+            self.proxy.logger.setLevel(logging.DEBUG)
+            self.proxy.interface = self
             
-            self.listener = Listener(executor=self.client,
+            self.listener = Listener(executor=self.proxy,
                                      host=address,
                                      port=int(port))
             self.listener.start()
-            connected = self.client.connect()
+            connected = self.proxy.connect()
             
             if connected:
-                self.window.set_title("ClientProxy [%s]" % self.client.get_name())
+                self.window.set_title("ClientProxy [%s]" % self.proxy.get_name())
             else:
                 self.set_status("ERROR: No server found")
-                self.__destroy_client()
+                self.__destroy_proxy()
                 widget.set_sensitive(True)
     
     
@@ -112,7 +113,7 @@ class ClientInterface:
         
     
     def __init__(self):
-        self.client = None
+        self.proxy = None
         self.listener = None
         
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)

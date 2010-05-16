@@ -29,7 +29,7 @@ class ClientOutput(threading.Thread):
     
     
     def addClientCallback(self, newClient):
-        print "[OUT] Added client %s" % newClient
+        print "[OUT] Added proxy %s" % newClient
         
     def clearClientListCallback(self):
         pass
@@ -98,12 +98,12 @@ if __name__=="__main__":
         sys.exit(1)
     
     client = ClientProxy(sys.argv[1], int(sys.argv[2]))
-    client.logger.setLevel(logging.DEBUG)
+    proxy.logger.setLevel(logging.DEBUG)
     
     # ClientProxy output interface
     client_output = ClientOutput()
     client.interface = client_output
-    client.interface.start()
+    proxy.interface.start()
     
     listener = Listener(executor=client, host=sys.argv[1], port=int(sys.argv[2]))
 
