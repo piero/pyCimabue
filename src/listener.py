@@ -14,7 +14,7 @@ import threading
 
 class Listener(threading.Thread):
     
-    def __init__(self, executor, host = '127.0.0.1', port = 50000):
+    def __init__(self, executor, host='127.0.0.1', port=50000, use_stdin=True):
         threading.Thread.__init__(self)
         self.__HOST = host
         self.__PORT = port
@@ -25,6 +25,7 @@ class Listener(threading.Thread):
         self.__running = False
         self.__executor = executor
         self.__executor.set_listener(self)
+        self.use_stdin = use_stdin
         
         # Logging
         logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -60,8 +61,11 @@ class Listener(threading.Thread):
                 listen_skt.close()
             self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
             sys.exit(1)
-            
-        input = [listen_skt, sys.stdin]
+        
+        if self.use_stdin:
+            input = [listen_skt, sys.stdin]
+        else:
+            input = [listen_skt]
         self.__running = True
 
         # The big loop
@@ -89,7 +93,10 @@ class Listener(threading.Thread):
                     self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
                     sys.exit(1)
                 
-                input = [listen_skt, sys.stdin]
+                if self.use_stdin:
+                    input = [listen_skt, sys.stdin]
+                else:
+                    input = [listen_skt]
                 continue
             
             if inputready == [] and outputready == [] and exceptready == []:
@@ -105,10 +112,11 @@ class Listener(threading.Thread):
                     new_skt.settimeout(self.__RECV_TIMEOUT)
                     input.append(new_skt)
             
-                elif skt == sys.stdin:
+                elif self.use_stdin and skt == sys.stdin:
                     # Handle stdin: exit
-                    sys.stdin.readline()
-                    self.__running = False
+                    read = sys.stdin.readline()
+                    if read == "x\n":
+                        self.__running = False
             
                 else:
                     # Handle a client socket
