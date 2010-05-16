@@ -29,7 +29,7 @@ class ClientOutput(threading.Thread):
     
     
     def addClientCallback(self, newClient):
-        print "[OUT] Added proxy %s" % newClient
+        print "[OUT] Added client %s" % newClient
         
     def clearClientListCallback(self):
         pass
@@ -47,13 +47,24 @@ class ClientOutput(threading.Thread):
 
 class ClientInput(threading.Thread):
     
-    def __init__(self, client):
+    def __init__(self, proxy):
         threading.Thread.__init__(self)
         self.__running = False
+        self.proxy = proxy
         
     def stop(self):
         self.__running = False
-        
+    
+    def __printClientList(self, clients):
+        print "   Connected clients"
+        print "-----------------------"
+        if len(clients) > 0:
+            for c in clients:
+                print c
+        else:
+            print " No clients connected"
+        print "-----------------------\n"
+    
     def run(self):
         self.__running = True
         
@@ -72,18 +83,24 @@ class ClientInput(threading.Thread):
             
             for s in inputready:
                 line = sys.stdin.readline()
-                
-                if line == "\n":
+                if line == "" or line == "\n":
+                    continue
+                # Quit
+                if line == "x\n":
                     self.__running = False
                     break
+                # Client list
+                elif line == "l\n":
+                    self.__printClientList(self.proxy.getClientList())
+                # Send a message
+                else:
+                    dest, msg = line.split(' ', 2)
                 
-                dest, msg = line.split(' ', 2)
+                    print "DEST: %s MSG: %s" % (dest, msg)
                 
-                print "DEST: %s MSG: %s" % (dest, msg)
-                
-                reply = client.send_message(dest.rstrip('\n'), msg.rstrip('\n'))
-                if reply != None:
-                    print 'Reply', str(reply), '\n'
+                    reply = self.proxy.send_message(dest.rstrip('\n'), msg.rstrip('\n'))
+                    if reply is not None:
+                        print "> %s: %s\n" % (dest, msg)
         
         print '[x] ClientInput'
     
@@ -97,21 +114,24 @@ if __name__=="__main__":
         print 'Usage:', sys.argv[0], 'ip port'
         sys.exit(1)
     
-    client = ClientProxy(sys.argv[1], int(sys.argv[2]))
+    proxy = ClientProxy(sys.argv[1], int(sys.argv[2]))
     proxy.logger.setLevel(logging.DEBUG)
     
     # ClientProxy output interface
     client_output = ClientOutput()
-    client.interface = client_output
+    proxy.interface = client_output
     proxy.interface.start()
     
-    listener = Listener(executor=client, host=sys.argv[1], port=int(sys.argv[2]))
+    listener = Listener(executor=proxy,
+                        host=sys.argv[1],
+                        port=int(sys.argv[2]),
+                        use_stdin=False)
 
     listener.start()
-    client.connect()
+    proxy.connect()
     
     # ClientProxy input interface
-    client_input = ClientInput(client)
+    client_input = ClientInput(proxy)
     client_input.start()
     
     while listener.isAlive() and client_input.isAlive():
