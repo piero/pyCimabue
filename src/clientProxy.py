@@ -244,3 +244,6 @@ class ClientProxy(ActiveObject):
         self.output("CLIENT LIST (%d clients except me)" % len(self.__clients))
         for c in self.__clients:
             self.output("%s" % c)
+    
+    def getClientList(self):
+        return self.__clients
