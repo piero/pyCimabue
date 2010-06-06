@@ -156,29 +156,34 @@ class BackupStrategy(ServerStrategy):
     def __notify_clients(self):
         """Notify Clients that Master has changed."""
         self.__server.clients_lock.acquire()
+        
         for c in self.__server.clients.keys():
-            notify_client_msg = NewMasterMessage(priority=0)
-            notify_client_msg.serverSrc = self.__server.get_name()
-            notify_client_msg.clientDst = c[0]
-            
-            if self.__master == self.__server:
-                notify_client_msg.clientSrc = self.__server.ip          # Our IP
-                notify_client_msg.serverDst = str(self.__server.port)   # Our port
-                notify_client_msg.data = self.__server.get_name()       # Our name
-            else:
-                notify_client_msg.clientSrc = self.__master[1][0]       # Master IP
-                notify_client_msg.serverDst = str(self.__master[1][1])  # Master port
-                notify_client_msg.data = self.__master[0]               # Master name
-            
-            client = self.__server.clients[c]
-            self.__server.output("Notifying client %s (%s:%d)..." % (c, client[0], client[1]))
-            reply = notify_client_msg.send(client[0], client[1])
-            
-            if reply is None or reply == ErrorMessage:
-                self.__server.output("Error notifying client %s (%s:%d)" %
-                                     (c, client[0], client[1]), logging.ERROR)
-                self.__server.output(">>> %s" % notify_client_msg.data)
-                del self.__server.clients[c[0]]
+            try:
+                notify_client_msg = NewMasterMessage(priority=0)
+                notify_client_msg.serverSrc = self.__server.get_name()
+                notify_client_msg.clientDst = c[0]
+                
+                if self.__master == self.__server:
+                    notify_client_msg.clientSrc = self.__server.ip          # Our IP
+                    notify_client_msg.serverDst = str(self.__server.port)   # Our port
+                    notify_client_msg.data = self.__server.get_name()       # Our name
+                else:
+                    notify_client_msg.clientSrc = self.__master[1][0]       # Master IP
+                    notify_client_msg.serverDst = str(self.__master[1][1])  # Master port
+                    notify_client_msg.data = self.__master[0]               # Master name
+                
+                client = self.__server.clients[c]
+                self.__server.output("Notifying client %s (%s:%d)..." % (c, client[0], client[1]))
+                reply = notify_client_msg.send(client[0], client[1])
+                
+                if reply is None or reply == ErrorMessage:
+                    self.__server.output("Error notifying client %s (%s:%d)" %
+                                         (c, client[0], client[1]), logging.ERROR)
+                    self.__server.output(">>> %s" % notify_client_msg.data)
+                    del self.__server.clients[c[0]]
+            except KeyError:
+                self.__server.output("Client not found", logging.ERROR)
+                
         self.__server.clients_lock.release()
     
     
