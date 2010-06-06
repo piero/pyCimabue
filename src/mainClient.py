@@ -115,7 +115,6 @@ if __name__=="__main__":
         sys.exit(1)
     
     proxy = ClientProxy(sys.argv[1], int(sys.argv[2]))
-    proxy.logger.setLevel(logging.DEBUG)
     
     # ClientProxy output interface
     client_output = ClientOutput()
@@ -126,6 +125,8 @@ if __name__=="__main__":
                         host=sys.argv[1],
                         port=int(sys.argv[2]),
                         use_stdin=False)
+    
+    listener.setLogLevel(logging.WARNING)
 
     listener.start()
     proxy.connect()

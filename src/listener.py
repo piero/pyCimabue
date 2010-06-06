@@ -35,6 +35,11 @@ class Listener(threading.Thread):
         self.__logger.addHandler(h)
     
     
+    def setLogLevel(self, log_level):
+        self.__logger.setLevel(log_level)
+        self.__executor.logger.setLevel(log_level)
+    
+    
     def get_host_and_port(self):
         return (self.__HOST, self.__PORT)
     
