@@ -37,6 +37,12 @@ class Server(ActiveObject):
     def stop(self):
         self._running = False
         self._kill_dependancies()
+        # Kill ping agent
+        if self.__ping_agent is not None and self.__ping_agent.is_alive():
+            self.output("[x] Killing ping agent...")
+            self.__ping_agent.stop()
+            self.__ping_agent.join(1.0)
+            self.__ping_agent = None
             
     
     def _kill_dependancies(self):
@@ -44,12 +50,6 @@ class Server(ActiveObject):
         if self.__strategy is not None:
             self.output("[x] Exiting strategy...")
             self.__strategy.exit()
-        
-        if self.__ping_agent is not None and self.__ping_agent.is_alive():
-            self.output("[x] Killing Ping Agent...")
-            self.__ping_agent.stop()
-            self.__ping_agent.join(1.0)
-            self.__ping_agent = None
     
     
     def set_listener(self, listener):
@@ -70,8 +70,8 @@ class Server(ActiveObject):
             return
         
         # Start the Ping Agent
-        self.__ping_agent = PingAgent(caller=self, run_as_server=True)
-        if not self.__ping_agent.isAlive():
+        if self.__ping_agent is None or not self.__ping_agent.is_alive:
+            self.__ping_agent = PingAgent(caller=self, run_as_server=True)
             self.__ping_agent.start()
         
     
