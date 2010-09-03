@@ -77,7 +77,8 @@ class Listener(threading.Thread):
         self.__logger.info("[x] %s" % self.__class__.__name__)
     
     
-    def __listener_loop(self, listen_skt):  
+    def __listener_loop(self, listen_skt):
+    """Wait for events."""
         # Add stdin to input devices
         if self.use_stdin:
             input = [listen_skt, sys.stdin]
@@ -170,11 +171,8 @@ class Listener(threading.Thread):
     
     
     def __create_listening_socket(self, host, port):
+        """Create a socket listening to the specified host/port."""
         listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listen_skt.bind((host, port))
         return listen_skt
-        
-    
-    
-    
