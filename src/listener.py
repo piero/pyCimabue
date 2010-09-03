@@ -78,7 +78,7 @@ class Listener(threading.Thread):
     
     
     def __listener_loop(self, listen_skt):
-    """Wait for events."""
+        """Wait for events."""
         # Add stdin to input devices
         if self.use_stdin:
             input = [listen_skt, sys.stdin]
