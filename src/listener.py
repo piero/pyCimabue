@@ -55,9 +55,7 @@ class Listener(threading.Thread):
         self.__executor.start()
         
         try:
-            listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            listen_skt.bind((self.__HOST, self.__PORT))
+            listen_skt = self.__create_listening_socket(self.__HOST, self.__PORT)
             self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
             listen_skt.listen(self.__backlog)
 
@@ -67,12 +65,27 @@ class Listener(threading.Thread):
             self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
             sys.exit(1)
         
+
+        # Start the listener loop
+        self.__listener_loop(listen_skt)
+        
+        # Exit
+        listen_skt.close()
+        self.__executor.stop()
+        self.__logger.debug("Joining executor...")
+        self.__executor.join(2.0)
+        self.__logger.info("[x] %s" % self.__class__.__name__)
+    
+    
+    def __listener_loop(self, listen_skt):  
+        # Add stdin to input devices
         if self.use_stdin:
             input = [listen_skt, sys.stdin]
         else:
             input = [listen_skt]
+        
         self.__running = True
-
+        
         # The big loop
         while self.__running:
             try:
@@ -86,9 +99,7 @@ class Listener(threading.Thread):
                 
                 # Create a new listen socket
                 try:
-                    listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    listen_skt.bind((self.__HOST, self.__PORT))
+                    listen_skt = self.__create_listening_socket(self.__HOST, self.__PORT)
                     self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
                     listen_skt.listen(self.__backlog)
         
@@ -156,10 +167,14 @@ class Listener(threading.Thread):
                         input.remove(skt)
                         skt.close()
                         break
-
-        # Exit
-        listen_skt.close()
-        self.__executor.stop()
-        self.__logger.debug("Joining executor...")
-        self.__executor.join(2.0)
-        self.__logger.info("[x] %s" % self.__class__.__name__)
+    
+    
+    def __create_listening_socket(self, host, port):
+        listen_skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listen_skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listen_skt.bind((host, port))
+        return listen_skt
+        
+    
+    
+    
