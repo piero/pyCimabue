@@ -54,15 +54,17 @@ class Listener(threading.Thread):
         self.__executor.port = self.__PORT
         self.__executor.start()
         
+        listen_skt = None
+        
         try:
-            listen_skt = self.__create_listening_socket(self.__HOST, self.__PORT)
-            self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
+            listen_skt = self.__create_listening_socket('', self.__PORT)
+            self.__logger.info("[run] Listening on %s:%d..." % (self.__HOST, self.__PORT))
             listen_skt.listen(self.__backlog)
 
         except socket.error, (value, message):
             if listen_skt:
                 listen_skt.close()
-            self.__logger.error("Couldn\'t open socket: %s (%d)" % (str(message), value))
+            self.__logger.error("[run] Couldn\'t open socket: %s (%d)" % (str(message), value))
             sys.exit(1)
         
 
@@ -101,7 +103,7 @@ class Listener(threading.Thread):
                 # Create a new listen socket
                 try:
                     listen_skt = self.__create_listening_socket(self.__HOST, self.__PORT)
-                    self.__logger.info("Listening on %s:%d..." % (self.__HOST, self.__PORT))
+                    self.__logger.info("[listener_loop] Listening on %s:%d..." % (self.__HOST, self.__PORT))                    
                     listen_skt.listen(self.__backlog)
         
                 except socket.error, (value, message):

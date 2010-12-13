@@ -196,19 +196,32 @@ class Server(ActiveObject):
         server_list = parser.get_output_list()
         connected = False
         
+        try_ip = None
+        try_port = None
+        received_hint_ip = None
+        received_hint_port = None
+        
         for i in range(len(server_list)):
             # Skip ourselves
             host_and_port = self.__listener.get_host_and_port()
             if server_list[i][0] == host_and_port[0] and int(server_list[i][1]) == host_and_port[1]:
                 continue
             
-            self.output("Trying %s:%s..." % (server_list[i][0], server_list[i][1]))
+            if (received_hint_ip is not None) and (received_hint_port is not None):
+                try_ip = received_hint_ip
+                try_port = received_hint_port
+            else:
+                try_ip = server_list[i][0]
+                try_port = server_list[i][1]
+            
+            self.output("Trying %s:%s..." % (try_ip, try_port))
             
             # Look for the Master Server
             skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                skt.connect((server_list[i][0], int(server_list[i][1])))
+                skt.connect((try_ip, int(try_port)))
             except socket.error:
+                self.output("Error connecting socket", logging.ERROR)
                 if skt != None:
                     skt.close()
                 continue
@@ -225,7 +238,12 @@ class Server(ActiveObject):
                 skt.close()
 
             if reply.type == 'ErrorMessage':
-                continue    # Oops, it wasn't the Master Server
+                # Oops, it wasn't the Master Server
+                # Extract suggested ip:port, if any
+                if (reply.clientSrc != '') and (reply.clientDst != ''):
+                    received_hint_ip = reply.clientSrc
+                    received_hint_port = reply.clientDst
+                continue
             
             elif reply.type == 'WelcomeBackupMessage':
                 self.set_role(Server.BACKUP, (reply, (server_list[i][0], int(server_list[i][1]))))
