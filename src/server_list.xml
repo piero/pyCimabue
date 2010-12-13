@@ -3,8 +3,8 @@
 <server_list>
 
 	<server>
-		<ip>192.168.5.172</ip>
-		<port>25000</port>
+		<ip>192.168.5.9</ip>
+		<port>23000</port>
 	</server>
 
 	<server>

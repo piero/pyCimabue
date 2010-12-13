@@ -28,11 +28,13 @@ if __name__=="__main__":
 	server = Server()
 	server.logger.setLevel(logging.DEBUG)
 	
-	if listen_ip != None:
+	if listen_ip is not None:
 		listener = Listener(executor=server, host=listen_ip, port=listen_port)
-	elif listen_port != None:
+	elif listen_port is not None:
+		# Use default port
 		listener = Listener(executor=server, port=listen_port)
 	else:
+		# Use default ip:port
 		listener = Listener(executor=server)
 		
 	listener.start()
