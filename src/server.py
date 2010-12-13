@@ -210,6 +210,7 @@ class Server(ActiveObject):
             if (received_hint_ip is not None) and (received_hint_port is not None):
                 try_ip = received_hint_ip
                 try_port = received_hint_port
+                --i
             else:
                 try_ip = server_list[i][0]
                 try_port = server_list[i][1]

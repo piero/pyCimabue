@@ -25,6 +25,8 @@ class ClientProxy(ActiveObject):
         self.__clients = []
         self.__connected = False
         self.__ping_agent = None
+        self.__try_ip = None
+        self.__try_port = None
         self.interface = None
         self.output(("CLIENT %s" % self.__name), logging.INFO)
     
@@ -51,8 +53,19 @@ class ClientProxy(ActiveObject):
         self.__connected = False
         
         for i in range(len(server_list)):
-            self.output("Connecting to %s:%s..." % (server_list[i][0], server_list[i][1]))
-            if self.connect_to_server(server_list[i][0], int(server_list[i][1])):
+            try_ip, try_port = None, None
+            
+            if (self.__try_ip is not None) and (self.__try_port is not None):
+                self.output("Using suggested ip:port: %s:%s..." % (self.__try_ip, self.__try_port))
+                try_ip = self.__try_ip
+                try_port = self.__try_port
+                --i
+            else:
+                try_ip = server_list[i][0]
+                try_port = server_list[i][1]
+            
+            self.output("Connecting to %s:%s..." % (try_ip, try_port))
+            if self.connect_to_server(try_ip, int(try_port)):
                 break
         
         if not self.__connected:
@@ -202,26 +215,38 @@ class ClientProxy(ActiveObject):
         msg.data = str(self.port)           # Our Port
         reply = msg.send()
         
-        if reply is not None and reply.type != 'SyncClientListMessage':
-            # Oops, it wasn't the Master Server
-            self.output("Oops, wrong server!", logging.WARNING)
-            if self.skt:
-                self.skt.close()
-                self.skt = None
-            return False
+        if reply is not None:
+            if reply.type != 'SyncClientListMessage':
+                # Oops, it wasn't the Master Server
+                self.output("Oops, wrong server!", logging.WARNING)
+                
+                # Wait, there might be some hint on where Master Server is...
+                if reply.clientSrc != '' and reply.serverDst != '':
+                    self.__try_ip = reply.clientSrc
+                    self.__try_port = reply.serverDst
+                    self.output("Extracted: %s:%s" % (self.__try_ip, self.__try_port), logging.WARNING)
+                
+                if self.skt:
+                    self.skt.close()
+                    self.skt = None
+                return False
             
+            else:
+                # We found the Master Server
+                self.master_ip = server_ip
+                self.master_port = server_port
+                self.master_name = reply.serverSrc
+                
+                # Update clients list
+                if reply.data is not None:
+                    c_names = pickle.loads(reply.data)
+                    self.__update_client_list(c_names)
+                    self.__connected = True
+                return True
+        
         else:
-            # We found the Master Server
-            self.master_ip = server_ip
-            self.master_port = server_port
-            self.master_name = reply.serverSrc
-            
-            # Update clients list
-            if reply.data is not None:
-                c_names = pickle.loads(reply.data)
-                self.__update_client_list(c_names)
-                self.__connected = True
-            return True
+            # Reply is None: unknown error
+            pass
             
     
     def __update_client_list(self, client_list):

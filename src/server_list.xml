@@ -8,8 +8,8 @@
 	</server>
 
 	<server>
-		<ip>127.0.0.1</ip>
-		<port>50000</port>
+		<ip>192.168.5.172</ip>
+		<port>24000</port>
 	</server>
 	
 	<server>

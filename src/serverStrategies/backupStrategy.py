@@ -215,11 +215,12 @@ class BackupStrategy(ServerStrategy):
     
     
     def _process_ConnectMessage(self, msg):
-        # TODO
         reply = ErrorMessage(msg.skt, msg.priority)
         reply.serverSrc = self.__server.get_name()
         reply.clientDst = msg.clientSrc
-        reply.data = "Unknown message type: " + msg.type
+        reply.clientSrc = self.__master[1][0]           # Master IP address
+        reply.serverDst = str(self.__master[1][1])      # Master Port
+        reply.data = self.__master[0]                   # Master Name
         return reply
     
     
