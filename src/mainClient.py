@@ -111,7 +111,7 @@ if __name__=="__main__":
     
     # Check command-line arguments
     if len(sys.argv) < 3:
-        print 'Usage:', sys.argv[0], 'ip port'
+        print 'Usage:', sys.argv[0], 'local_ip local_port'
         sys.exit(1)
     
     proxy = ClientProxy(sys.argv[1], int(sys.argv[2]))
