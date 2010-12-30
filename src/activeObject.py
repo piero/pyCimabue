@@ -63,7 +63,7 @@ class ActiveObject(threading.Thread):
 
     def stop(self):
         self._running = False
-        
-
+    
+    
     def output(self, msg, level=logging.DEBUG):
         self.logger.log(level, msg)

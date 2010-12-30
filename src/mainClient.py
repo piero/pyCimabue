@@ -17,7 +17,6 @@ class ClientOutput(threading.Thread):
         threading.Thread.__init__(self)
         self.__running = False
     
-    
     def print_message(self, msg):
         print "[OUT] %s" % msg
 
@@ -26,7 +25,6 @@ class ClientOutput(threading.Thread):
 
     def stop(self):
         self.__running = False
-    
     
     def addClientCallback(self, newClient):
         print "[OUT] Added client %s" % newClient
@@ -69,12 +67,9 @@ class ClientInput(threading.Thread):
         self.__running = True
         
         print '[o] ClientInput running'
-        
         print 'Line format: DESTINATION MESSAGE'
         
         while self.__running:
-            #print '>>>'
-            
             try:
                 inputready, outputready, exceptready = select.select([sys.stdin], [], [], 1.0)
             except select.error, (value, message):
@@ -126,7 +121,8 @@ if __name__=="__main__":
                         port=int(sys.argv[2]),
                         use_stdin=False)
     
-    listener.setLogLevel(logging.WARNING)
+    # Set log level
+    listener.setLogLevel(logging.INFO)
 
     listener.start()
     proxy.connect()
