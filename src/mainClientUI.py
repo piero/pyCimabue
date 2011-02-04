@@ -19,7 +19,7 @@ from clientProxy import *
 gobject.threads_init()
 
 
-class ClientInterface:
+class ClientUI:
     
     def addClientCallback(self, client=None):
         if client is not None:
@@ -243,5 +243,5 @@ class ClientInterface:
 
 ### EXECUTION STARTS HERE ###
 if __name__ == "__main__":
-    hello = ClientInterface()
+    hello = ClientUI()
     hello.main()
