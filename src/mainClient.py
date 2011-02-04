@@ -67,7 +67,7 @@ class ClientInput(threading.Thread):
         self.__running = True
         
         print '[o] ClientInput running'
-        print 'Line format: DESTINATION MESSAGE'
+        print "Line format: DESTINATION MESSAGE ('x' to terminate)"
         
         while self.__running:
             try:
