@@ -28,7 +28,7 @@ class ClientProxy(ActiveObject):
         self.__try_ip = None
         self.__try_port = None
         self.interface = None
-        self.output(("CLIENT %s" % self.__name), logging.INFO)
+        self.output(("CLIENT %s (%s:%d)" % (self.__name, self.ip, self.port)), logging.INFO)
     
     
     def kill(self):

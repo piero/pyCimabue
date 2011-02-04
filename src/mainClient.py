@@ -9,7 +9,7 @@ Created on 25/ott/2009
 from listener import *
 from clientProxy import *
 import sys
-
+from optparse import OptionParser
 
 class ClientOutput(threading.Thread):
     
@@ -104,12 +104,17 @@ class ClientInput(threading.Thread):
 
 if __name__=="__main__":
     
-    # Check command-line arguments
-    if len(sys.argv) < 3:
-        print 'Usage:', sys.argv[0], 'local_ip local_port'
-        sys.exit(1)
+    # Parse command-line arguments   
+    usage = "Usage: %prog [options] local-ip local-port"
+    optionParser = OptionParser(usage=usage, version="pyCimabue Client v1.0")
+    optionParser.add_option("-l", "--log-level", action="store", type="int", dest="log_level", help="Log level [1-5]", default=4)
     
-    proxy = ClientProxy(sys.argv[1], int(sys.argv[2]))
+    (options, args) = optionParser.parse_args()
+    if len(args) != 2:
+        optionParser.error("Incorrect number of arguments.")
+    
+    # Create the ClientProxy
+    proxy = ClientProxy(args[0], int(args[1]))
     
     # ClientProxy output interface
     client_output = ClientOutput()
@@ -117,17 +122,23 @@ if __name__=="__main__":
     proxy.interface.start()
     
     listener = Listener(executor=proxy,
-                        host=sys.argv[1],
-                        port=int(sys.argv[2]),
+                        host=args[0],
+                        port=int(args[1]),
                         use_stdin=False)
     
     # Set log level
-    listener.setLogLevel(logging.INFO)
-
+    if options.log_level == 1: log_level = logging.CRITICAL
+    elif options.log_level == 2: log_level = logging.ERROR
+    elif options.log_level == 4: log_level = logging.INFO
+    elif options.log_level == 3: log_level = logging.WARNING
+    elif options.log_level == 5: log_level = logging.DEBUG
+    listener.setLogLevel(log_level)
+    
+    # Start the Client and connect
     listener.start()
     proxy.connect()
     
-    # ClientProxy input interface
+    # Start the Interface and the Listener
     client_input = ClientInput(proxy)
     client_input.start()
     
