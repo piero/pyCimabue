@@ -8,7 +8,7 @@ Created on 20/set/2009
 
 from listener import *
 from server import *
-
+from optparse import OptionParser
 
 
 ### EXECUTION STARTS HERE ###
@@ -17,16 +17,28 @@ if __name__=="__main__":
 	# Parse command-line args
 	listen_ip, listen_port = None, None
 	
-	if len(sys.argv) == 2:
-		listen_port = int(sys.argv[1])
-	elif len(sys.argv) == 3:
-		listen_ip = sys.argv[1]
-		listen_port = int(sys.argv[2])
+	# Parse command-line arguments   
+	usage = "Usage: %prog [options] [local-ip] local-port"
+	optionParser = OptionParser(usage=usage, version="pyCimabue Server v1.0")
+	optionParser.add_option("-l", "--log-level", action="store", type="int", dest="log_level", help="Log level [1-5]", default=4)
 	
+	(options, args) = optionParser.parse_args()
+	if len(args) < 1: optionParser.error("Incorrect number of arguments.")
+	elif len(args) == 1: listen_port = int(args[0])
+	elif len(args) == 2:
+		listen_ip = args[0]
+		listen_port = int(args[1])
 	
 	# Create Server, Listener and start
 	server = Server()
-	server.logger.setLevel(logging.INFO)
+	
+	 # Set log level
+	if options.log_level == 1: log_level = logging.CRITICAL
+	elif options.log_level == 2: log_level = logging.ERROR
+	elif options.log_level == 4: log_level = logging.INFO
+	elif options.log_level == 3: log_level = logging.WARNING
+	elif options.log_level == 5: log_level = logging.DEBUG
+	server.logger.setLevel(log_level)
 	
 	if listen_ip is not None:
 		listener = Listener(executor=server, host=listen_ip, port=listen_port)
