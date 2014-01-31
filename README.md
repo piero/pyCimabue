@@ -10,4 +10,4 @@ Being a study on fault-tolerance and election protocols, I deliberately avoided 
 
 #### Trivia
 
-My first implementation was in C++ and I named it *Cimabue*, after the [famous Italian painter](http://en.wikipedia.org/wiki/Cimabue Cimabue). However I decided to adopt Python for fast prototyping: this is why I added the *py* suffix.
+My first implementation was in C++ and I named it *Cimabue*, after the [famous Italian painter](http://en.wikipedia.org/wiki/Cimabue). However I decided to adopt Python for fast prototyping: this is why I added the *py* suffix.
